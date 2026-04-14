@@ -13,16 +13,16 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
-      <div className="w-[90%] max-w-md rounded-full px-6 py-3 glass-nav shadow-[0_20px_40px_rgba(77,101,77,0.06)] flex justify-around items-center">
+      <div className="w-[90%] max-w-md rounded-full px-6 py-3 glass-nav soft-shadow flex justify-around items-center">
         {navItems.map(({ icon: Icon, label, path }) => {
           const isActive = location.pathname === path;
           return (
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`p-4 rounded-full transition-all duration-300 ${
+              className={`p-4 rounded-full transition-all duration-200 ${
                 isActive
-                  ? "bg-primary-container text-on-primary-container scale-110 shadow-lg"
+                  ? "bg-primary-container text-on-primary-container scale-110"
                   : "text-muted-foreground hover:bg-surface-container-high"
               }`}
             >
