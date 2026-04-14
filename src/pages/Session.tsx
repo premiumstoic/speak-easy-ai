@@ -181,7 +181,7 @@ const Session = () => {
           orbState={currentTherapyState?.ui_config?.orb_state ?? "pulsing_listening"}
           isSpeaking={state.isSpeaking}
           micLocked={state.micLock || isIntervention}
-          onStartSpeaking={startSpeaking}
+          onStartSpeaking={handleStartSpeaking}
           onStopSpeaking={handleStopSpeaking}
           transcript={state.transcriptA || state.transcriptB}
         />
@@ -251,7 +251,7 @@ const Session = () => {
         micLocked={state.micLock || !partnerAActive}
         strikeFlash={partnerAActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
-        onStartSpeaking={startSpeaking}
+        onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
       />
 
@@ -277,7 +277,7 @@ const Session = () => {
         micLocked={state.micLock || !partnerBActive}
         strikeFlash={partnerBActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
-        onStartSpeaking={startSpeaking}
+        onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
       />
 
