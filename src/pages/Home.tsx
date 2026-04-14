@@ -71,9 +71,9 @@ const Home = () => {
       <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
         <div className="w-[90%] max-w-md rounded-full px-6 py-3 glass-nav shadow-[0_20px_40px_rgba(77,101,77,0.06)] flex justify-around items-center">
           {[
-            { icon: "home", label: "Home", path: "/" },
             { icon: "map", label: "Journey", path: "/journey" },
-            { icon: "user", label: "Profile", path: "/profile" },
+            { icon: "home", label: "Home", path: "/" },
+            { icon: "user", label: "Me", path: "/profile" },
           ].map(({ label, path }) => {
             const isActive = path === "/";
             return (
