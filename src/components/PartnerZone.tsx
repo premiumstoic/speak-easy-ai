@@ -14,6 +14,7 @@ interface PartnerZoneProps {
   strikeCount: number;
   onStartSpeaking: () => void;
   onStopSpeaking: () => void;
+  isLiveRecording?: boolean;
 }
 
 export function PartnerZone({
