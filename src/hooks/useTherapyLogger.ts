@@ -13,12 +13,12 @@ export function useTherapyLogger(sessionId: string) {
 
   const log = useCallback(async (entry: Omit<LogEntry, "session_id">) => {
     turnCounter.current++;
-    const { error } = await supabase.from("therapy_logs").insert({
+    const { error } = await supabase.from("therapy_logs").insert([{
       session_id: sessionId,
       speaker: entry.speaker,
       raw_transcript: entry.raw_transcript,
-      ai_analysis: entry.ai_analysis,
-    });
+      ai_analysis: entry.ai_analysis as unknown as import("@/integrations/supabase/types").Json,
+    }]);
     if (error) console.warn("[TherapyLogger] insert failed:", error.message);
   }, [sessionId]);
 
