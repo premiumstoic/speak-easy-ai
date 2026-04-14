@@ -40,16 +40,16 @@ export function CenterMediator({
 
   return (
     <div className="relative z-50 h-0 flex items-center justify-center">
-      <div className="reflection-glass px-8 py-5 rounded-xl max-w-lg mx-6 text-center shadow-2xl border border-white/20">
+      <div className="bg-surface-container-lowest px-8 py-5 rounded-xl max-w-lg mx-6 text-center soft-shadow-lg border border-line/30">
         {/* Prompt text */}
-        <p className="text-on-secondary-container font-headline text-base leading-relaxed font-medium">
+        <p className="text-foreground font-headline text-base leading-relaxed font-medium italic">
           "{prompt}"
         </p>
 
         {/* AI label */}
         <div className="mt-2 flex items-center justify-center gap-2">
           <Sparkles className="w-3 h-3 text-secondary" />
-          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-secondary">
+          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-secondary font-body">
             {stateLabel} — AI Reflection Guide
           </span>
         </div>
@@ -61,10 +61,10 @@ export function CenterMediator({
               <button
                 key={emotion}
                 onClick={() => onSelectEmotion(emotion)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 font-body ${
                   selectedEmotion === emotion
                     ? "bg-primary text-primary-foreground"
-                    : "bg-white/30 text-on-secondary-container hover:bg-white/50"
+                    : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high"
                 }`}
               >
                 {emotion}
@@ -76,7 +76,7 @@ export function CenterMediator({
         {/* Advance */}
         <button
           onClick={onAdvance}
-          className="flex items-center gap-1 mt-2 mx-auto text-[11px] text-secondary/60 hover:text-secondary transition-colors tracking-wider uppercase font-label"
+          className="flex items-center gap-1 mt-2 mx-auto text-[11px] text-muted-foreground hover:text-foreground transition-colors duration-200 tracking-wider uppercase font-label"
         >
           Continue
           <ChevronRight className="w-3 h-3" />

@@ -14,40 +14,40 @@ const Profile = () => {
       {/* Header */}
       <header className="pt-6 px-6">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="font-headline text-2xl font-bold tracking-tight">Me</h1>
+          <h1 className="font-headline text-2xl font-semibold tracking-tight">Me</h1>
           <button className="p-2 rounded-full bg-surface-container-high text-on-surface-variant">
             <Settings className="w-5 h-5" />
           </button>
         </div>
 
         {/* Profile Card */}
-        <div className="bg-surface-container-low rounded-xl p-6 mb-4">
+        <div className="bg-surface-container-lowest rounded-xl p-6 mb-4 soft-shadow border border-line/30">
           <div className="flex items-center gap-4 mb-5">
             <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center">
               <User className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h2 className="font-headline text-xl font-bold">Sarah</h2>
+              <h2 className="font-headline text-xl font-semibold">Sarah</h2>
               <div className="flex items-center gap-1.5 mt-1">
                 <Heart className="w-3.5 h-3.5 text-secondary fill-secondary" />
-                <span className="text-on-surface-variant text-sm font-medium">Linked with Tom</span>
+                <span className="text-on-surface-variant text-sm font-medium font-body">Linked with Tom</span>
               </div>
             </div>
           </div>
 
           {/* Stats Row */}
           <div className="flex gap-3">
-            <div className="flex-1 bg-surface-container-lowest rounded-lg p-4 text-center">
+            <div className="flex-1 bg-surface-container-low rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-primary font-headline">4</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">Sessions</p>
+              <p className="text-on-surface-variant text-xs mt-0.5 font-body">Sessions</p>
             </div>
-            <div className="flex-1 bg-surface-container-lowest rounded-lg p-4 text-center">
+            <div className="flex-1 bg-surface-container-low rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-tertiary font-headline">2<span className="text-sm font-medium ml-0.5">wk</span></p>
-              <p className="text-on-surface-variant text-xs mt-0.5">Streak</p>
+              <p className="text-on-surface-variant text-xs mt-0.5 font-body">Streak</p>
             </div>
-            <div className="flex-1 bg-surface-container-lowest rounded-lg p-4 text-center">
+            <div className="flex-1 bg-surface-container-low rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-secondary font-headline">87%</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">Harmony</p>
+              <p className="text-on-surface-variant text-xs mt-0.5 font-body">Harmony</p>
             </div>
           </div>
         </div>
@@ -55,14 +55,14 @@ const Profile = () => {
 
       <main className="px-6 mt-6 space-y-6">
         {/* AI Insight */}
-        <div className="reflection-glass rounded-xl p-5">
+        <div className="reflection-glass rounded-xl p-5 border border-line/30">
           <div className="flex gap-4 items-start">
             <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5 text-secondary" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-on-surface mb-1">Reflection Insight</h3>
-              <p className="text-on-surface-variant text-sm leading-relaxed">
+              <h3 className="font-semibold text-sm text-on-surface mb-1 font-body">Reflection Insight</h3>
+              <p className="text-on-surface-variant text-sm leading-relaxed font-body">
                 You and Tom have maintained a 2-week streak. Your evening reflections are building a stronger emotional safety net.
               </p>
             </div>
@@ -71,8 +71,8 @@ const Profile = () => {
 
         {/* Preferences */}
         <section>
-          <h3 className="font-headline text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Preferences</h3>
-          <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(77,101,77,0.04)]">
+          <h3 className="font-body text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Preferences</h3>
+          <div className="bg-surface-container-lowest rounded-xl overflow-hidden soft-shadow border border-line/30">
             <ToggleRow
               label="Insight Notifications"
               description="AI-powered reflections from patterns"
@@ -98,8 +98,8 @@ const Profile = () => {
 
         {/* Menu Items */}
         <section>
-          <h3 className="font-headline text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Account</h3>
-          <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(77,101,77,0.04)]">
+          <h3 className="font-body text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Account</h3>
+          <div className="bg-surface-container-lowest rounded-xl overflow-hidden soft-shadow border border-line/30">
             <MenuItem icon={<Heart className="w-5 h-5" />} label="Relationship" />
             <MenuItem icon={<Clock className="w-5 h-5" />} label="Session History" border />
             <MenuItem icon={<Shield className="w-5 h-5" />} label="Privacy & Export" border />
@@ -107,7 +107,7 @@ const Profile = () => {
         </section>
 
         {/* Sign Out */}
-        <button className="w-full flex items-center justify-center gap-2 py-3 text-error font-semibold text-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <button className="w-full flex items-center justify-center gap-2 py-3 text-destructive font-semibold text-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors duration-200 font-body">
           <LogOut className="w-4 h-4" />
           Sign Out
         </button>
@@ -126,18 +126,18 @@ function ToggleRow({ label, description, checked, onChange, border }: {
   border?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between p-5 ${border ? "border-t border-outline-variant/10" : ""}`}>
+    <div className={`flex items-center justify-between p-5 ${border ? "border-t border-line/30" : ""}`}>
       <div className="pr-4">
-        <p className="font-semibold text-on-surface text-sm">{label}</p>
-        <p className="text-on-surface-variant text-xs mt-0.5 leading-relaxed">{description}</p>
+        <p className="font-semibold text-on-surface text-sm font-body">{label}</p>
+        <p className="text-on-surface-variant text-xs mt-0.5 leading-relaxed font-body">{description}</p>
       </div>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative w-12 h-7 rounded-full transition-colors duration-300 shrink-0 ${
+        className={`relative w-12 h-7 rounded-full transition-colors duration-200 shrink-0 ${
           checked ? "bg-primary" : "bg-surface-container-highest"
         }`}
       >
-        <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform duration-300 shadow-sm ${
+        <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-sm ${
           checked ? "translate-x-5" : ""
         }`} />
       </button>
@@ -147,9 +147,9 @@ function ToggleRow({ label, description, checked, onChange, border }: {
 
 function MenuItem({ icon, label, border }: { icon: React.ReactNode; label: string; border?: boolean }) {
   return (
-    <button className={`w-full flex items-center gap-4 p-5 text-on-surface hover:bg-surface-container-low transition-colors ${border ? "border-t border-outline-variant/10" : ""}`}>
+    <button className={`w-full flex items-center gap-4 p-5 text-on-surface hover:bg-surface-container-low transition-colors duration-200 ${border ? "border-t border-line/30" : ""}`}>
       <span className="text-on-surface-variant">{icon}</span>
-      <span className="font-medium text-sm flex-1 text-left">{label}</span>
+      <span className="font-medium text-sm flex-1 text-left font-body">{label}</span>
       <ChevronRight className="w-4 h-4 text-on-surface-variant" />
     </button>
   );
