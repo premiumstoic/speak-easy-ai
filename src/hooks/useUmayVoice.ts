@@ -26,7 +26,7 @@ export const useUmayVoice = () => {
           text: text,
           voice: voiceId,
           stability: stability,
-          apply_text_normalization: 'auto'
+          apply_text_normalization: 'auto' as any
         }
       });
 
