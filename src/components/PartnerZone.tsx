@@ -14,6 +14,7 @@ interface PartnerZoneProps {
   strikeCount: number;
   onStartSpeaking: () => void;
   onStopSpeaking: () => void;
+  isLiveRecording?: boolean;
 }
 
 export function PartnerZone({
@@ -30,6 +31,7 @@ export function PartnerZone({
   strikeCount,
   onStartSpeaking,
   onStopSpeaking,
+  isLiveRecording = false,
 }: PartnerZoneProps) {
   const warningThreshold = maxRecordingTime - 10;
   const isWarning = speakingTimer >= warningThreshold || strikeCount >= 2;
@@ -111,8 +113,12 @@ export function PartnerZone({
           disabled={micLocked || !isActive}
           className={`flex flex-col items-center gap-2 transition-transform active:scale-95 ${
             micLocked || !isActive ? "cursor-not-allowed" : "cursor-pointer"
-          }`}
+          } ${isLiveRecording && isActive ? "relative" : ""}`}
         >
+          {/* Live recording pulse ring */}
+          {isLiveRecording && isActive && (
+            <div className="absolute inset-0 -m-2 rounded-full border-2 border-primary animate-ping opacity-30 pointer-events-none" />
+          )}
           <div
             className={`rounded-full flex items-center justify-center transition-all ${
               micLocked || !isActive

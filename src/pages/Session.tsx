@@ -1,6 +1,7 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSessionState } from "@/hooks/useSessionState";
 import { useTherapyLogger } from "@/hooks/useTherapyLogger";
+import { useFalStreaming } from "@/hooks/useFalStreaming";
 import { useAuth } from "@/contexts/AuthContext";
 import { GroundingOverlay } from "@/components/GroundingOverlay";
 import { PartnerZone } from "@/components/PartnerZone";
@@ -12,7 +13,7 @@ import { openMediationProtocol } from "@/data/openMediationProtocol";
 import { toast } from "sonner";
 import { Bug, X, AlertTriangle } from "lucide-react";
 import UmayLogo from "@/components/UmayLogo";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
   imago_core_dialogue: imagoProtocol,
@@ -44,22 +45,54 @@ const Session = () => {
     selectEmotion,
     triggerIntervention,
     completeIntervention,
+    setTranscript,
   } = useSessionState(protocol);
 
   const { logTurn, logIntervention } = useTherapyLogger(sessionId);
+  const {
+    transcript: sttTranscript,
+    isRecording: sttIsRecording,
+    startRecording,
+    stopRecording,
+    error: sttError,
+  } = useFalStreaming();
+
+  // Sync STT transcript into session state
+  useEffect(() => {
+    if (sttTranscript) {
+      setTranscript(sttTranscript);
+    }
+  }, [sttTranscript, setTranscript]);
+
+  // Show STT errors
+  useEffect(() => {
+    if (sttError) {
+      toast.error("Microphone Error", { description: sttError });
+    }
+  }, [sttError]);
 
   const currentTherapyState = getCurrentState();
   const activeRole = currentTherapyState?.active_role;
   const maxTime = getMaxRecordingTime();
   const layout = currentTherapyState?.layout;
 
-  // Wrap stopSpeaking to log the turn
-  const handleStopSpeaking = useCallback(() => {
-    const transcript = state.activePartner === "A" ? state.transcriptA : state.transcriptB;
+  // Combined start: session state + real mic
+  const handleStartSpeaking = useCallback(() => {
+    startSpeaking();
+    startRecording();
+  }, [startSpeaking, startRecording]);
+
+  // Combined stop: stop mic, get final transcript, log, stop session state
+  const handleStopSpeaking = useCallback(async () => {
+    const finalTranscript = await stopRecording();
+    if (finalTranscript) {
+      setTranscript(finalTranscript);
+    }
+    const transcript = finalTranscript || (state.activePartner === "A" ? state.transcriptA : state.transcriptB);
     const speaker = state.activePartner === "A" ? "Partner A" : "Partner B";
     logTurn(speaker, transcript, state.currentStateKey);
     stopSpeaking();
-  }, [stopSpeaking, logTurn, state.activePartner, state.transcriptA, state.transcriptB, state.currentStateKey]);
+  }, [stopRecording, stopSpeaking, logTurn, setTranscript, state.activePartner, state.transcriptA, state.transcriptB, state.currentStateKey]);
 
   // Wrap triggerIntervention to log it
   const handleTriggerIntervention = useCallback((tripwireId: string) => {
@@ -148,7 +181,7 @@ const Session = () => {
           orbState={currentTherapyState?.ui_config?.orb_state ?? "pulsing_listening"}
           isSpeaking={state.isSpeaking}
           micLocked={state.micLock || isIntervention}
-          onStartSpeaking={startSpeaking}
+          onStartSpeaking={handleStartSpeaking}
           onStopSpeaking={handleStopSpeaking}
           transcript={state.transcriptA || state.transcriptB}
         />
@@ -218,8 +251,9 @@ const Session = () => {
         micLocked={state.micLock || !partnerAActive}
         strikeFlash={partnerAActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
-        onStartSpeaking={startSpeaking}
+        onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
+        isLiveRecording={sttIsRecording && partnerAActive}
       />
 
       <CenterMediator
@@ -244,8 +278,9 @@ const Session = () => {
         micLocked={state.micLock || !partnerBActive}
         strikeFlash={partnerBActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
-        onStartSpeaking={startSpeaking}
+        onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
+        isLiveRecording={sttIsRecording && partnerBActive}
       />
 
       <button

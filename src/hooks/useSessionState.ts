@@ -16,14 +16,6 @@ export interface SessionData {
   activeTripwire: string | null;
 }
 
-const MOCK_WORDS = [
-  "I", "feel", "like", "when", "we", "talk", "about", "this",
-  "it", "makes", "me", "feel", "really", "frustrated", "because",
-  "I", "just", "want", "us", "to", "understand", "each", "other",
-  "better", "and", "find", "a", "way", "to", "connect", "more",
-  "deeply", "with", "one", "another", "through", "honest",
-  "communication", "and", "mutual", "respect",
-];
 
 export function useSessionState(config: TherapyConfig) {
   const initialState = config.states[config.initial_state];
@@ -44,9 +36,7 @@ export function useSessionState(config: TherapyConfig) {
     activeTripwire: null,
   });
 
-  const speakingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const wordIndexRef = useRef(0);
 
   const getCurrentState = useCallback(
     (key?: string): TherapyState | undefined => config.states[key ?? state.currentStateKey],
@@ -84,12 +74,11 @@ export function useSessionState(config: TherapyConfig) {
   }, [config]);
 
   const clearTimers = useCallback(() => {
-    if (speakingIntervalRef.current) clearInterval(speakingIntervalRef.current);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
   }, []);
 
   const startSpeaking = useCallback(() => {
-    wordIndexRef.current = 0;
+    setState((s) => ({ ...s, isSpeaking: true, speakingTimer: 0 }));
     setState((s) => ({ ...s, isSpeaking: true, speakingTimer: 0 }));
 
     timerIntervalRef.current = setInterval(() => {
@@ -102,22 +91,16 @@ export function useSessionState(config: TherapyConfig) {
         return { ...s, speakingTimer: newTimer };
       });
     }, 1000);
+  }, [getMaxRecordingTime]);
 
-    speakingIntervalRef.current = setInterval(() => {
-      setState((s) => {
-        const word = MOCK_WORDS[wordIndexRef.current % MOCK_WORDS.length];
-        wordIndexRef.current++;
-        // For open_mic_stream, both partners share transcript — write to A
-        const currentType = config.states[s.currentStateKey]?.type;
-        const key = currentType === "open_mic_stream" ? "transcriptA" : (s.activePartner === "A" ? "transcriptA" : "transcriptB");
-        const currentText = s[key] as string;
-        return {
-          ...s,
-          [key]: currentText + (currentText ? " " : "") + word,
-        };
-      });
-    }, 300);
-  }, [getMaxRecordingTime, config]);
+  /** Update transcript from external source (e.g. STT) */
+  const setTranscript = useCallback((text: string) => {
+    setState((s) => {
+      const currentType = config.states[s.currentStateKey]?.type;
+      const key = currentType === "open_mic_stream" ? "transcriptA" : (s.activePartner === "A" ? "transcriptA" : "transcriptB");
+      return { ...s, [key]: text };
+    });
+  }, [config]);
 
   const stopSpeaking = useCallback(() => {
     clearTimers();
@@ -238,5 +221,6 @@ export function useSessionState(config: TherapyConfig) {
     selectEmotion,
     triggerIntervention,
     completeIntervention,
+    setTranscript,
   };
 }
