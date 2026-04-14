@@ -218,6 +218,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: { Args: { _code: string }; Returns: string }
+      find_invite_by_code: {
+        Args: { _code: string }
+        Returns: {
+          couple_id: string
+          id: string
+          invited_by: string
+        }[]
+      }
       is_couple_member: {
         Args: { _couple_id: string; _user_id: string }
         Returns: boolean
