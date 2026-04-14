@@ -213,6 +213,33 @@ export type Database = {
           },
         ]
       }
+      therapy_logs: {
+        Row: {
+          ai_analysis: Json
+          created_at: string
+          id: string
+          raw_transcript: string
+          session_id: string
+          speaker: string
+        }
+        Insert: {
+          ai_analysis?: Json
+          created_at?: string
+          id?: string
+          raw_transcript: string
+          session_id: string
+          speaker: string
+        }
+        Update: {
+          ai_analysis?: Json
+          created_at?: string
+          id?: string
+          raw_transcript?: string
+          session_id?: string
+          speaker?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

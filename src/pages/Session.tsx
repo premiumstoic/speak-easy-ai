@@ -1,5 +1,7 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSessionState } from "@/hooks/useSessionState";
+import { useTherapyLogger } from "@/hooks/useTherapyLogger";
+import { useAuth } from "@/contexts/AuthContext";
 import { GroundingOverlay } from "@/components/GroundingOverlay";
 import { PartnerZone } from "@/components/PartnerZone";
 import { CenterMediator } from "@/components/CenterMediator";
@@ -10,6 +12,7 @@ import { openMediationProtocol } from "@/data/openMediationProtocol";
 import { toast } from "sonner";
 import { Bug, X, AlertTriangle } from "lucide-react";
 import UmayLogo from "@/components/UmayLogo";
+import { useCallback, useMemo } from "react";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
   imago_core_dialogue: imagoProtocol,
@@ -21,8 +24,12 @@ const TRIPWIRE_IDS = ["the_loop", "the_missed_drop", "the_escalation", "the_ston
 const Session = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { profile } = useAuth();
   const techniqueId = searchParams.get("technique") || "imago_core_dialogue";
   const protocol = PROTOCOLS[techniqueId] ?? imagoProtocol;
+
+  // Stable session ID for logging
+  const sessionId = useMemo(() => `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, []);
 
   const {
     state,
@@ -39,10 +46,28 @@ const Session = () => {
     completeIntervention,
   } = useSessionState(protocol);
 
+  const { logTurn, logIntervention } = useTherapyLogger(sessionId);
+
   const currentTherapyState = getCurrentState();
   const activeRole = currentTherapyState?.active_role;
   const maxTime = getMaxRecordingTime();
   const layout = currentTherapyState?.layout;
+
+  // Wrap stopSpeaking to log the turn
+  const handleStopSpeaking = useCallback(() => {
+    const transcript = state.activePartner === "A" ? state.transcriptA : state.transcriptB;
+    const speaker = state.activePartner === "A" ? "Partner A" : "Partner B";
+    logTurn(speaker, transcript, state.currentStateKey);
+    stopSpeaking();
+  }, [stopSpeaking, logTurn, state.activePartner, state.transcriptA, state.transcriptB, state.currentStateKey]);
+
+  // Wrap triggerIntervention to log it
+  const handleTriggerIntervention = useCallback((tripwireId: string) => {
+    const interventionState = protocol.states["state_ai_intervention"];
+    const text = interventionState?.intervention_templates?.[tripwireId] ?? "Let us pause.";
+    logIntervention(tripwireId, text);
+    triggerIntervention(tripwireId);
+  }, [triggerIntervention, logIntervention, protocol]);
 
   const handleStrike = () => {
     if (state.strikeCount >= 2) {
@@ -124,7 +149,7 @@ const Session = () => {
           isSpeaking={state.isSpeaking}
           micLocked={state.micLock || isIntervention}
           onStartSpeaking={startSpeaking}
-          onStopSpeaking={stopSpeaking}
+          onStopSpeaking={handleStopSpeaking}
           transcript={state.transcriptA || state.transcriptB}
         />
 
@@ -142,7 +167,7 @@ const Session = () => {
           {TRIPWIRE_IDS.map((tw) => (
             <button
               key={tw}
-              onClick={() => triggerIntervention(tw)}
+              onClick={() => handleTriggerIntervention(tw)}
               className="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center hover:bg-tertiary/20 transition-colors duration-200"
               title={`Trigger: ${tw}`}
             >
@@ -194,7 +219,7 @@ const Session = () => {
         strikeFlash={partnerAActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
         onStartSpeaking={startSpeaking}
-        onStopSpeaking={stopSpeaking}
+        onStopSpeaking={handleStopSpeaking}
       />
 
       <CenterMediator
@@ -220,7 +245,7 @@ const Session = () => {
         strikeFlash={partnerBActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
         onStartSpeaking={startSpeaking}
-        onStopSpeaking={stopSpeaking}
+        onStopSpeaking={handleStopSpeaking}
       />
 
       <button
