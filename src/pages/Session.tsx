@@ -253,6 +253,7 @@ const Session = () => {
         strikeCount={state.strikeCount}
         onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
+        isLiveRecording={sttIsRecording && partnerAActive}
       />
 
       <CenterMediator
@@ -279,6 +280,7 @@ const Session = () => {
         strikeCount={state.strikeCount}
         onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
+        isLiveRecording={sttIsRecording && partnerBActive}
       />
 
       <button
