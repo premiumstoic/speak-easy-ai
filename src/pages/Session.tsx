@@ -45,22 +45,54 @@ const Session = () => {
     selectEmotion,
     triggerIntervention,
     completeIntervention,
+    setTranscript,
   } = useSessionState(protocol);
 
   const { logTurn, logIntervention } = useTherapyLogger(sessionId);
+  const {
+    transcript: sttTranscript,
+    isRecording: sttIsRecording,
+    startRecording,
+    stopRecording,
+    error: sttError,
+  } = useFalStreaming();
+
+  // Sync STT transcript into session state
+  useEffect(() => {
+    if (sttTranscript) {
+      setTranscript(sttTranscript);
+    }
+  }, [sttTranscript, setTranscript]);
+
+  // Show STT errors
+  useEffect(() => {
+    if (sttError) {
+      toast.error("Microphone Error", { description: sttError });
+    }
+  }, [sttError]);
 
   const currentTherapyState = getCurrentState();
   const activeRole = currentTherapyState?.active_role;
   const maxTime = getMaxRecordingTime();
   const layout = currentTherapyState?.layout;
 
-  // Wrap stopSpeaking to log the turn
-  const handleStopSpeaking = useCallback(() => {
-    const transcript = state.activePartner === "A" ? state.transcriptA : state.transcriptB;
+  // Combined start: session state + real mic
+  const handleStartSpeaking = useCallback(() => {
+    startSpeaking();
+    startRecording();
+  }, [startSpeaking, startRecording]);
+
+  // Combined stop: stop mic, get final transcript, log, stop session state
+  const handleStopSpeaking = useCallback(async () => {
+    const finalTranscript = await stopRecording();
+    if (finalTranscript) {
+      setTranscript(finalTranscript);
+    }
+    const transcript = finalTranscript || (state.activePartner === "A" ? state.transcriptA : state.transcriptB);
     const speaker = state.activePartner === "A" ? "Partner A" : "Partner B";
     logTurn(speaker, transcript, state.currentStateKey);
     stopSpeaking();
-  }, [stopSpeaking, logTurn, state.activePartner, state.transcriptA, state.transcriptB, state.currentStateKey]);
+  }, [stopRecording, stopSpeaking, logTurn, setTranscript, state.activePartner, state.transcriptA, state.transcriptB, state.currentStateKey]);
 
   // Wrap triggerIntervention to log it
   const handleTriggerIntervention = useCallback((tripwireId: string) => {
