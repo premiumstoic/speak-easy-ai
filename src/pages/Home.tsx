@@ -20,9 +20,6 @@ const Home = () => {
 
       {/* Center: Start Session */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 -mt-8">
-        <div className="text-muted-foreground font-medium tracking-wide text-sm uppercase mb-4 animate-fade-in">
-          Welcome back, Sarah & Tom
-        </div>
         <h1 className="text-3xl font-headline font-extrabold tracking-tight mb-10 text-center leading-tight animate-fade-in">
           How is your heart <br />
           <span className="text-primary italic">today?</span>
