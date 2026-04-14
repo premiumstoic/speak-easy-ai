@@ -63,6 +63,8 @@ const Session = () => {
     completeIntervention,
     setTranscript,
   } = useSessionState(protocol);
+  const { isSessionComplete, completedTurns } = state;
+  const hasHandledCompletionRef = useRef(false);
 
   const { logAnalysisTick, logTurn, logIntervention } = useTherapyLogger(
     sessionId,
@@ -75,6 +77,7 @@ const Session = () => {
     interimTranscript: sttInterim,
     audioLevel: sttAudioLevel,
     isRecording: sttIsRecording,
+    isTranscribing: sttIsTranscribing,
     startRecording,
     stopRecording,
     error: sttError,
@@ -98,6 +101,16 @@ const Session = () => {
       toast.error("Microphone Error", { description: sttError });
     }
   }, [sttError]);
+
+  // End limited-turn protocols (e.g., Imago) once the configured turn count is reached.
+  useEffect(() => {
+    if (!isSessionComplete || hasHandledCompletionRef.current) return;
+    hasHandledCompletionRef.current = true;
+    toast.success("Session complete", {
+      description: `Completed ${completedTurns} turns.`,
+    });
+    navigate("/", { replace: true });
+  }, [isSessionComplete, completedTurns, navigate]);
 
   const currentTherapyState = getCurrentState();
   const activeRole = currentTherapyState?.active_role;
@@ -363,6 +376,7 @@ const Session = () => {
           liveLines={sttLines}
           liveInterim={sttInterim}
           audioLevel={sttAudioLevel}
+          isTranscribing={sttIsTranscribing}
         />
 
         {/* AI Intervention Overlay */}
@@ -449,6 +463,7 @@ const Session = () => {
         liveLines={sttLines}
         liveInterim={sttInterim}
         audioLevel={sttAudioLevel}
+        isTranscribing={sttIsTranscribing && partnerAActive}
       />
 
       <CenterMediator
@@ -479,6 +494,7 @@ const Session = () => {
         liveLines={sttLines}
         liveInterim={sttInterim}
         audioLevel={sttAudioLevel}
+        isTranscribing={sttIsTranscribing && partnerBActive}
       />
 
       <button

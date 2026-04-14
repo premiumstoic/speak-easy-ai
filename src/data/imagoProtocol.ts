@@ -7,6 +7,7 @@ export const imagoProtocol: TherapyConfig = {
   description:
     "Slows down reactivity through strict Mirroring, Validation, and Empathy.",
   initial_state: "grounding",
+  max_turns: 2,
 
   states: {
     grounding: {

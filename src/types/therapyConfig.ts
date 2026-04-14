@@ -61,5 +61,6 @@ export interface TherapyConfig {
   version: string;
   description: string;
   initial_state: string;
+  max_turns?: number;
   states: Record<string, TherapyState>;
 }
