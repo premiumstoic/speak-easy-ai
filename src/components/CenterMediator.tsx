@@ -1,42 +1,39 @@
 import { Sparkles, ChevronRight } from "lucide-react";
-import type { SessionState } from "@/hooks/useSessionState";
+import type { UIConfig } from "@/types/therapyConfig";
 
 interface CenterMediatorProps {
-  sessionState: SessionState;
+  stateKey: string;
+  stateType: string;
+  activeRole?: string;
+  uiConfig?: UIConfig;
   selectedEmotion: string | null;
   onSelectEmotion: (emotion: string) => void;
   onAdvance: () => void;
 }
 
-const STATE_PROMPTS: Record<number, string> = {
-  1: "Share what's on your heart. Your partner is listening with intention.",
-  2: 'Start with: "What I heard you say is..."',
-  3: 'Start with: "You make sense because..."',
-  4: "Choose the emotion you sense in your partner:",
-  5: "Roles reversing... Take a breath.",
+const ROLE_LABELS: Record<string, string> = {
+  SENDER: "Sending",
+  RECEIVER: "Listening",
 };
 
-const EMOTIONS = ["Angry", "Sad", "Scared", "Overwhelmed", "Lonely", "Hurt", "Anxious", "Unseen"];
-
 export function CenterMediator({
-  sessionState,
+  stateKey,
+  stateType,
+  activeRole,
+  uiConfig,
   selectedEmotion,
   onSelectEmotion,
   onAdvance,
 }: CenterMediatorProps) {
-  if (sessionState === 0) return null;
+  // Don't show during grounding
+  if (stateType === "breathing_exercise") return null;
 
-  const prompt = STATE_PROMPTS[sessionState] || "";
-  const stateLabel =
-    sessionState === 1
-      ? "Sending"
-      : sessionState === 2
-      ? "Mirroring"
-      : sessionState === 3
-      ? "Validation"
-      : sessionState === 4
-      ? "Empathy"
-      : "Role Reversal";
+  const prompt = uiConfig?.prompt_overlay ?? "";
+  const stateLabel = activeRole
+    ? ROLE_LABELS[activeRole] ?? activeRole
+    : stateType === "role_reversal"
+    ? "Role Reversal"
+    : "";
 
   return (
     <div className="relative z-50 h-0 flex items-center justify-center">
@@ -54,10 +51,10 @@ export function CenterMediator({
           </span>
         </div>
 
-        {/* Emotion Word Bank (State 4) */}
-        {sessionState === 4 && (
+        {/* Emotion Word Bank */}
+        {uiConfig?.emotion_bank_visible && uiConfig.emotion_words && (
           <div className="flex flex-wrap justify-center gap-2 mt-3">
-            {EMOTIONS.map((emotion) => (
+            {uiConfig.emotion_words.map((emotion) => (
               <button
                 key={emotion}
                 onClick={() => onSelectEmotion(emotion)}

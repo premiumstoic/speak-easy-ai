@@ -2,6 +2,7 @@ import { useSessionState } from "@/hooks/useSessionState";
 import { GroundingOverlay } from "@/components/GroundingOverlay";
 import { PartnerZone } from "@/components/PartnerZone";
 import { CenterMediator } from "@/components/CenterMediator";
+import { imagoProtocol } from "@/data/imagoProtocol";
 import { toast } from "sonner";
 import { Bug, X } from "lucide-react";
 import UmayLogo from "@/components/UmayLogo";
@@ -11,6 +12,9 @@ const Session = () => {
   const navigate = useNavigate();
   const {
     state,
+    config,
+    getCurrentState,
+    getMaxRecordingTime,
     skipGrounding,
     completeGrounding,
     startSpeaking,
@@ -18,7 +22,11 @@ const Session = () => {
     advanceState,
     triggerStrike,
     selectEmotion,
-  } = useSessionState();
+  } = useSessionState(imagoProtocol);
+
+  const currentTherapyState = getCurrentState();
+  const activeRole = currentTherapyState?.active_role;
+  const maxTime = getMaxRecordingTime();
 
   const handleStrike = () => {
     if (state.strikeCount >= 2) {
@@ -29,22 +37,31 @@ const Session = () => {
     triggerStrike();
   };
 
-  const isPartnerASender =
-    state.sessionState === 1
-      ? state.activePartner === "A"
-      : state.sessionState >= 2 && state.sessionState <= 4
-      ? state.activePartner !== "A"
-      : state.activePartner === "A";
+  // Determine which partner is active based on config's active_role
+  const isGrounding = currentTherapyState?.type === "breathing_exercise";
+  const isRoleReversal = currentTherapyState?.type === "role_reversal";
 
-  const isPartnerBSender = !isPartnerASender;
+  // SENDER role: the activePartner speaks. RECEIVER role: the other partner speaks.
+  const partnerAIsSender =
+    activeRole === "SENDER"
+      ? state.activePartner === "A"
+      : activeRole === "RECEIVER"
+      ? state.activePartner !== "A"
+      : false;
+
+  const partnerBIsSender = !partnerAIsSender;
 
   const partnerAActive =
-    (state.sessionState === 1 && state.activePartner === "A") ||
-    (state.sessionState >= 2 && state.sessionState <= 4 && state.activePartner !== "A");
+    !isGrounding &&
+    !isRoleReversal &&
+    ((activeRole === "SENDER" && state.activePartner === "A") ||
+      (activeRole === "RECEIVER" && state.activePartner !== "A"));
 
   const partnerBActive =
-    (state.sessionState === 1 && state.activePartner === "B") ||
-    (state.sessionState >= 2 && state.sessionState <= 4 && state.activePartner !== "B");
+    !isGrounding &&
+    !isRoleReversal &&
+    ((activeRole === "SENDER" && state.activePartner === "B") ||
+      (activeRole === "RECEIVER" && state.activePartner !== "B"));
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-surface relative">
@@ -67,30 +84,37 @@ const Session = () => {
       </header>
 
       {/* Grounding Overlay */}
-      {state.sessionState === 0 && (
-        <GroundingOverlay onComplete={completeGrounding} onSkip={skipGrounding} />
+      {isGrounding && (
+        <GroundingOverlay
+          durationSeconds={currentTherapyState?.duration_seconds ?? 60}
+          onComplete={completeGrounding}
+          onSkip={skipGrounding}
+        />
       )}
 
       {/* Partner A Zone (Top) */}
       <PartnerZone
         partner="A"
         partnerName="Alex"
-        role={isPartnerASender ? "SENDER" : "RECEIVER"}
+        role={partnerAIsSender ? "SENDER" : "RECEIVER"}
         isActive={partnerAActive}
         transcript={state.transcriptA}
         isSpeaking={state.isSpeaking && partnerAActive}
         speakingTimer={partnerAActive ? state.speakingTimer : 0}
+        maxRecordingTime={maxTime}
         micLocked={state.micLock || !partnerAActive}
         strikeFlash={partnerAActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
-        sessionState={state.sessionState}
         onStartSpeaking={startSpeaking}
         onStopSpeaking={stopSpeaking}
       />
 
       {/* Center Mediator */}
       <CenterMediator
-        sessionState={state.sessionState}
+        stateKey={state.currentStateKey}
+        stateType={currentTherapyState?.type ?? "speaking_turn"}
+        activeRole={activeRole}
+        uiConfig={currentTherapyState?.ui_config}
         selectedEmotion={state.selectedEmotion}
         onSelectEmotion={selectEmotion}
         onAdvance={advanceState}
@@ -100,15 +124,15 @@ const Session = () => {
       <PartnerZone
         partner="B"
         partnerName="Jordan"
-        role={isPartnerBSender ? "SENDER" : "RECEIVER"}
+        role={partnerBIsSender ? "SENDER" : "RECEIVER"}
         isActive={partnerBActive}
         transcript={state.transcriptB}
         isSpeaking={state.isSpeaking && partnerBActive}
         speakingTimer={partnerBActive ? state.speakingTimer : 0}
+        maxRecordingTime={maxTime}
         micLocked={state.micLock || !partnerBActive}
         strikeFlash={partnerBActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
-        sessionState={state.sessionState}
         onStartSpeaking={startSpeaking}
         onStopSpeaking={stopSpeaking}
       />
