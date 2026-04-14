@@ -1,10 +1,29 @@
 import { useNavigate } from "react-router-dom";
-import { Mic } from "lucide-react";
+import { Mic, Waves } from "lucide-react";
 import { InsightCard } from "@/components/InsightCard";
 import UmayLogo from "@/components/UmayLogo";
+import { useState } from "react";
+
+const techniques = [
+  {
+    id: "imago_core_dialogue",
+    name: "Imago Dialogue",
+    description: "Structured mirroring, validation & empathy turns",
+    icon: Mic,
+  },
+  {
+    id: "open_mediation_enactment",
+    name: "Guided Enactment",
+    description: "Open conversation with AI process observation",
+    icon: Waves,
+  },
+];
 
 const Home = () => {
   const navigate = useNavigate();
+  const [selectedTechnique, setSelectedTechnique] = useState(techniques[0].id);
+
+  const selected = techniques.find((t) => t.id === selectedTechnique)!;
 
   return (
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
@@ -17,13 +36,30 @@ const Home = () => {
       </header>
 
       {/* Center: Start Session */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 -mt-8">
-        <h1 className="text-3xl font-headline font-bold tracking-tight mb-10 text-center leading-snug animate-fade-in">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 -mt-4">
+        <h1 className="text-3xl font-headline font-bold tracking-tight mb-6 text-center leading-snug animate-fade-in">
           How is your heart <br />
           <span className="text-primary italic">today?</span>
         </h1>
 
-        <div className="relative group cursor-pointer" onClick={() => navigate("/session")}>
+        {/* Technique Picker */}
+        <div className="flex gap-2 mb-8">
+          {techniques.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setSelectedTechnique(t.id)}
+              className={`px-4 py-2 rounded-full text-sm font-body font-medium transition-all duration-200 ${
+                selectedTechnique === t.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-surface-container text-muted-foreground hover:bg-surface-container-high"
+              }`}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative group cursor-pointer" onClick={() => navigate(`/session?technique=${selectedTechnique}`)}>
           {/* Soft glow */}
           <div className="absolute inset-0 rounded-full bg-primary/8 blur-2xl scale-125 animate-[pulse_4s_ease-out_infinite]" />
 
@@ -31,9 +67,9 @@ const Home = () => {
           <button
             className="relative w-44 h-44 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground flex flex-col items-center justify-center gap-2 soft-shadow-lg hover:scale-[1.03] active:scale-95 transition-all duration-200 ease-out session-glow"
           >
-            <Mic className="w-12 h-12 mb-1" />
+            <selected.icon className="w-12 h-12 mb-1" />
             <span className="font-body text-lg font-semibold tracking-tight">Start Session</span>
-            <span className="text-primary-foreground/60 text-xs font-medium">15 min reflection</span>
+            <span className="text-primary-foreground/60 text-xs font-medium">{selected.description.split(",")[0]}</span>
           </button>
         </div>
       </main>
@@ -44,27 +80,13 @@ const Home = () => {
           <h2 className="font-body text-sm font-semibold tracking-wide text-muted-foreground uppercase">Insights</h2>
         </div>
         <div className="flex gap-3 overflow-x-auto no-scrollbar px-6 snap-x">
-          <InsightCard
-            type="notification"
-            title="Gratitude"
-            body="Tom completed his daily gratitude reflection."
-            action="Acknowledge"
-          />
-          <InsightCard
-            type="question"
-            title="Deep Question"
-            body="What made you feel safe this week?"
-          />
-          <InsightCard
-            type="reminder"
-            title="Reminder"
-            body="No-Screen Night tonight at 8 PM."
-            progress={80}
-          />
+          <InsightCard type="notification" title="Gratitude" body="Tom completed his daily gratitude reflection." action="Acknowledge" />
+          <InsightCard type="question" title="Deep Question" body="What made you feel safe this week?" />
+          <InsightCard type="reminder" title="Reminder" body="No-Screen Night tonight at 8 PM." progress={80} />
         </div>
       </section>
 
-      {/* Bottom Nav rendered by BottomNav component via routes, but Home has inline nav */}
+      {/* Bottom Nav */}
       <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
         <div className="w-[90%] max-w-md rounded-full px-6 py-3 glass-nav soft-shadow flex justify-around items-center">
           {[
@@ -95,7 +117,6 @@ const Home = () => {
   );
 };
 
-// Inline icon components
 const HomeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
 );
