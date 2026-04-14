@@ -24,8 +24,12 @@ const TRIPWIRE_IDS = ["the_loop", "the_missed_drop", "the_escalation", "the_ston
 const Session = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { profile } = useAuth();
   const techniqueId = searchParams.get("technique") || "imago_core_dialogue";
   const protocol = PROTOCOLS[techniqueId] ?? imagoProtocol;
+
+  // Stable session ID for logging
+  const sessionId = useMemo(() => `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, []);
 
   const {
     state,
@@ -41,6 +45,8 @@ const Session = () => {
     triggerIntervention,
     completeIntervention,
   } = useSessionState(protocol);
+
+  const { logTurn, logIntervention } = useTherapyLogger(sessionId);
 
   const currentTherapyState = getCurrentState();
   const activeRole = currentTherapyState?.active_role;
