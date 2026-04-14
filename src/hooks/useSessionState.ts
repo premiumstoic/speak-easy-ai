@@ -36,9 +36,7 @@ export function useSessionState(config: TherapyConfig) {
     activeTripwire: null,
   });
 
-  const speakingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const wordIndexRef = useRef(0);
 
   const getCurrentState = useCallback(
     (key?: string): TherapyState | undefined => config.states[key ?? state.currentStateKey],
