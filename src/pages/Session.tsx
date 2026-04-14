@@ -16,7 +16,7 @@ import { useCallback, useMemo, useEffect, useRef } from "react";
 import { TRIPWIRE_IDS, type TripwireId } from "@/types/therapyEvents";
 import { useUmayVoice } from "@/hooks/useUmayVoice";
 import { useDemoPlayback } from "@/hooks/useDemoPlayback";
-import { DEMO_SCRIPTS } from "@/data/demoScripts";
+import { DEMO_SCRIPTS, DEMO_INTERVENTIONS } from "@/data/demoScripts";
 import { Play, Square } from "lucide-react";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
@@ -69,6 +69,7 @@ const Session = () => {
     triggerIntervention,
     completeIntervention,
     setTranscript,
+    setPartnerTranscript,
   } = useSessionState(protocol);
   const { isSessionComplete, completedTurns } = state;
   const hasHandledCompletionRef = useRef(false);
@@ -123,7 +124,7 @@ const Session = () => {
     demoAudioLevel,
   } = useDemoPlayback({
     script: demoScript,
-    onTranscript: setTranscript,
+    onTranscript: setPartnerTranscript,
     onTripwire: demoTripwire,
     onAdvanceState: advanceState,
     onStartSpeaking: demoStartSpeaking,
@@ -224,9 +225,12 @@ const Session = () => {
         stopSpeaking();
 
         const interventionState = protocol.states["state_ai_intervention"];
-        const text =
-          interventionState?.intervention_templates?.[tripwireId] ??
-          "Let us pause.";
+        const text = isDemo
+          ? DEMO_INTERVENTIONS[tripwireId] ??
+            interventionState?.intervention_templates?.[tripwireId] ??
+            "Duralım."
+          : interventionState?.intervention_templates?.[tripwireId] ??
+            "Let us pause.";
 
         await logIntervention(text);
         triggerIntervention(tripwireId);
@@ -336,11 +340,12 @@ const Session = () => {
   // Open Mediation: HearthOrb layout
   if (isOpenMic || isIntervention) {
     const interventionState = protocol.states["state_ai_intervention"];
-    const interventionText =
-      state.activeTripwire && interventionState?.intervention_templates
-        ? interventionState.intervention_templates[state.activeTripwire] ??
-          "Let us pause and take a breath together."
-        : "";
+    const interventionText = state.activeTripwire
+      ? (isDemo
+          ? DEMO_INTERVENTIONS[state.activeTripwire as TripwireId] ?? ""
+          : interventionState?.intervention_templates?.[state.activeTripwire] ?? ""
+        ) || "Let us pause and take a breath together."
+      : "";
 
     return (
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-surface relative">
@@ -389,10 +394,10 @@ const Session = () => {
           onStartSpeaking={handleStartSpeaking}
           onStopSpeaking={handleStopSpeaking}
           transcript={state.transcriptA || state.transcriptB}
-          liveLines={demoIsPlaying ? [] : sttLines}
+          liveLines={demoIsPlaying ? [state.transcriptA || state.transcriptB].filter(Boolean) : sttLines}
           liveInterim={demoIsPlaying ? "" : sttInterim}
           audioLevel={demoIsPlaying ? demoAudioLevel : sttAudioLevel}
-          isTranscribing={sttIsTranscribing}
+          isTranscribing={!demoIsPlaying && sttIsTranscribing}
         />
 
         {/* AI Intervention Overlay */}
@@ -492,7 +497,7 @@ const Session = () => {
 
       <PartnerZone
         partner="A"
-        partnerName="Alex"
+        partnerName={isDemo ? "Ayşe" : "Alex"}
         role={partnerAIsSender ? "SENDER" : "RECEIVER"}
         isActive={partnerAActive}
         transcript={state.transcriptA}
@@ -523,7 +528,7 @@ const Session = () => {
 
       <PartnerZone
         partner="B"
-        partnerName="Jordan"
+        partnerName={isDemo ? "Burak" : "Jordan"}
         role={!partnerAIsSender ? "SENDER" : "RECEIVER"}
         isActive={partnerBActive}
         transcript={state.transcriptB}

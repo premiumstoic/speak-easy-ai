@@ -4,7 +4,7 @@ import type { TripwireId } from "@/types/therapyEvents";
 
 interface UseDemoPlaybackOptions {
   script: DemoTurn[];
-  onTranscript: (text: string) => void;
+  onTranscript: (partner: "A" | "B", text: string) => void;
   onTripwire: (tripwireId: TripwireId) => void;
   onAdvanceState: () => void;
   onStartSpeaking: () => void;
@@ -26,36 +26,42 @@ function delay(ms: number): Promise<void> {
 
 /**
  * Picks two distinct SpeechSynthesis voices for Partner A and Partner B.
- * Prefers English voices; tries to get one male-sounding and one female-sounding.
+ * Prefers Turkish voices; falls back to English.
  */
 function pickVoices(): { voiceA: SpeechSynthesisVoice | null; voiceB: SpeechSynthesisVoice | null } {
   const all = window.speechSynthesis.getVoices();
+  const turkish = all.filter((v) => v.lang.startsWith("tr"));
+
+  // If we have Turkish voices, use them
+  if (turkish.length >= 2) {
+    return { voiceA: turkish[0], voiceB: turkish[1] };
+  }
+  if (turkish.length === 1) {
+    // One Turkish voice — use it for both but with different pitch
+    return { voiceA: turkish[0], voiceB: turkish[0] };
+  }
+
+  // Fallback to English
   const english = all.filter((v) => v.lang.startsWith("en"));
   const pool = english.length >= 2 ? english : all;
-
-  // Heuristic: names containing female-associated keywords vs the rest
-  const femaleHints = /samantha|victoria|karen|fiona|moira|tessa|veena|female/i;
-  const females = pool.filter((v) => femaleHints.test(v.name));
-  const others = pool.filter((v) => !femaleHints.test(v.name));
-
-  const voiceA = others[0] ?? pool[0] ?? null;
-  const voiceB = females[0] ?? pool[1] ?? pool[0] ?? null;
-  return { voiceA, voiceB };
+  return { voiceA: pool[0] ?? null, voiceB: pool[1] ?? pool[0] ?? null };
 }
 
 function speakText(
   text: string,
   voice: SpeechSynthesisVoice | null,
   rate: number,
+  pitch: number,
+  lang: string,
   onBoundary: () => void
 ): Promise<void> {
   return new Promise((resolve) => {
     const utterance = new SpeechSynthesisUtterance(text);
     if (voice) utterance.voice = voice;
     utterance.rate = rate;
-    utterance.pitch = 1.0;
+    utterance.pitch = pitch;
+    utterance.lang = lang;
 
-    // Fire on word boundaries to simulate audio level
     utterance.onboundary = onBoundary;
     utterance.onend = () => resolve();
     utterance.onerror = () => resolve();
@@ -90,10 +96,9 @@ export function useDemoPlayback({
     cancelledRef.current = false;
     setIsPlaying(true);
 
-    // Voices may not be loaded yet — give the browser a moment
     const run = async () => {
       // Wait for voices to populate (Chrome loads them async)
-      await delay(200);
+      await delay(300);
       const { voiceA, voiceB } = pickVoices();
 
       for (let i = 0; i < script.length; i++) {
@@ -102,21 +107,24 @@ export function useDemoPlayback({
         const turn = script[i];
         setCurrentTurnIndex(i);
 
+        // Clear previous transcript for this speaker
+        onTranscript(turn.speaker, "");
+
         // Simulate pressing the mic button
         onStartSpeaking();
 
-        // Feed transcript word-by-word for a realistic typing effect
+        // Stream words into transcript alongside speech
         const words = turn.text.split(" ");
         let partial = "";
 
-        // Start speaking via SpeechSynthesis
         const voice = turn.speaker === "A" ? voiceA : voiceB;
+        // Use different pitch for A vs B to distinguish voices
+        const pitch = turn.speaker === "A" ? 1.2 : 0.9;
+
         const wordBoundaryCb = () => {
-          // Pulse the audio level on each word boundary
           setDemoAudioLevel(0.4 + Math.random() * 0.5);
         };
 
-        // Stream words into transcript on a timer alongside speech
         const wordInterval = setInterval(() => {
           if (words.length === 0) {
             clearInterval(wordInterval);
@@ -124,15 +132,13 @@ export function useDemoPlayback({
           }
           const next = words.shift()!;
           partial = partial ? `${partial} ${next}` : next;
-          onTranscript(partial);
+          onTranscript(turn.speaker, partial);
         }, 180);
 
-        await speakText(turn.text, voice, 1.0, wordBoundaryCb);
+        await speakText(turn.text, voice, 1.0, pitch, "tr-TR", wordBoundaryCb);
 
         clearInterval(wordInterval);
-
-        // Ensure the full text is set
-        onTranscript(turn.text);
+        onTranscript(turn.speaker, turn.text);
         setDemoAudioLevel(0);
 
         if (cancelledRef.current) break;
@@ -140,18 +146,17 @@ export function useDemoPlayback({
         // Simulate releasing the mic
         onStopSpeaking();
 
-        // Advance the state machine (e.g. sender → mirroring)
+        // Advance the protocol state machine
         onAdvanceState();
 
-        // If this turn triggers a tripwire, fire it and wait for intervention
+        // If this turn triggers a tripwire, fire it and wait for AI intervention
         if (turn.tripwire) {
           await delay(600);
           if (cancelledRef.current) break;
           onTripwire(turn.tripwire);
-          // Wait for the AI intervention TTS to finish
-          // The intervention auto-completes via the aiIsSpeaking effect in Session,
-          // so we just need a generous pause here
-          await delay(12000);
+          // Wait for the AI intervention TTS to finish — the intervention
+          // auto-completes via the aiIsSpeaking effect in Session
+          await delay(15000);
           if (cancelledRef.current) break;
         }
 

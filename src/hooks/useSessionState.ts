@@ -238,6 +238,14 @@ export function useSessionState(config: TherapyConfig) {
     setState((s) => ({ ...s, selectedEmotion: emotion }));
   }, []);
 
+  /** Set a specific partner's transcript directly (used by demo playback) */
+  const setPartnerTranscript = useCallback((partner: "A" | "B", text: string) => {
+    setState((s) => ({
+      ...s,
+      [partner === "A" ? "transcriptA" : "transcriptB"]: text,
+    }));
+  }, []);
+
   return {
     state,
     config,
@@ -253,5 +261,6 @@ export function useSessionState(config: TherapyConfig) {
     triggerIntervention,
     completeIntervention,
     setTranscript,
+    setPartnerTranscript,
   };
 }

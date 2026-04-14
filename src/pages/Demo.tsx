@@ -7,20 +7,20 @@ const techniques = [
   {
     id: "imago_core_dialogue",
     name: "Imago Dialogue",
-    description: "Structured mirroring, validation & empathy turns",
+    description: "Aynalama, doğrulama ve empati ile yapılandırılmış diyalog",
     icon: Mic,
   },
   {
     id: "open_mediation_enactment",
     name: "Guided Enactment",
-    description: "Open conversation with AI process observation",
+    description: "Açık konuşma — AI süreç gözlemcisi ile",
     icon: Waves,
   },
 ];
 
 const Demo = () => {
   const navigate = useNavigate();
-  const [selectedTechnique, setSelectedTechnique] = useState(techniques[0].id);
+  const [selectedTechnique, setSelectedTechnique] = useState(techniques[1].id);
   const selected = techniques.find((t) => t.id === selectedTechnique)!;
 
   return (
@@ -40,14 +40,14 @@ const Demo = () => {
 
         {/* Badge */}
         <span className="inline-block px-3 py-1 rounded-full bg-tertiary/10 text-tertiary text-xs font-body font-semibold uppercase tracking-wider mb-8">
-          Demo Mode
+          Demo
         </span>
 
         <h1 className="text-2xl font-headline font-bold tracking-tight mb-2 text-center">
-          Experience a session
+          Bir seans deneyimleyin
         </h1>
         <p className="text-sm font-body text-muted-foreground text-center mb-8 max-w-xs">
-          Try Umay's therapy modalities with live speech recognition and AI process observation. No account needed.
+          Ayşe ve Burak'ın terapi seansını izleyin. Canlı konuşma tanıma ve AI süreç gözlemi ile.
         </p>
 
         {/* Technique picker */}
@@ -81,7 +81,7 @@ const Demo = () => {
           <div className="absolute inset-0 rounded-full bg-primary/8 blur-2xl scale-110 animate-[pulse_4s_ease-out_infinite]" />
           <button className="relative w-full py-4 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground font-body font-semibold text-base hover:opacity-90 active:scale-[0.98] transition-all duration-200 soft-shadow-lg flex items-center justify-center gap-3">
             <selected.icon className="w-5 h-5" />
-            Start Demo Session
+            Demo Seansı Başlat
           </button>
         </div>
 
@@ -90,7 +90,7 @@ const Demo = () => {
           onClick={() => navigate("/login")}
           className="mt-6 text-sm font-body text-muted-foreground hover:text-primary transition-colors"
         >
-          Back to sign in
+          Giriş sayfasına dön
         </button>
       </div>
     </div>

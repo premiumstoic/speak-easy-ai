@@ -10,83 +10,117 @@ export interface DemoTurn {
 }
 
 /**
- * Open Mediation demo: a realistic couple conversation that starts calm,
- * escalates, and hits a tripwire — triggering the AI Process Observer.
+ * Guided Enactment (Open Mediation) — Turkish dialogue.
+ * Tension is high. "Sen" language and blame fly back and forth.
+ * The AI Process Observer interrupts at the escalation peak.
  */
 export const openMediationScript: DemoTurn[] = [
   {
+    speaker: "B",
+    text: "Ayşe yine mi aynı konu? Harcamalarımıza dikkat etmemiz lazım diyorum.",
+    pauseAfter: 1800,
+  },
+  {
     speaker: "A",
-    text: "I want to talk about what happened last weekend. I felt really alone when I was cleaning the kitchen and nobody noticed.",
+    text: "Sen her şeye karışıyorsun Burak! Aldığım iki parça eşya mı batıyor sana?",
     pauseAfter: 1500,
   },
   {
     speaker: "B",
-    text: "I hear you. I didn't realize it bothered you that much. I thought we were both just doing our own thing.",
+    text: "İki parça değil, sürekli bir şeyler geliyor eve. Gelecek için para biriktirmemiz lazım.",
     pauseAfter: 1500,
   },
   {
     speaker: "A",
-    text: "It's not just about the kitchen. It's a pattern. I feel like I carry the invisible load and nobody sees it.",
+    text: "Gelecek gelecek... Yaşayamıyoruz ki biz şu anı! Hep senin planların, senin kuralların.",
     pauseAfter: 1200,
   },
   {
     speaker: "B",
-    text: "That's not fair. I do a lot around here too. You just don't notice what I do.",
+    text: "Benim kurallarım mı? Ben sadece mantıklı olmaya çalışıyorum.",
     pauseAfter: 1200,
   },
   {
     speaker: "A",
-    text: "See, this is what always happens. I try to share something vulnerable and you get defensive.",
+    text: "Senin mantığın beni boğuyor. Kendi paramı harcarken senden izin mi alacağım?",
     pauseAfter: 1000,
   },
   {
     speaker: "B",
-    text: "I'm not being defensive. You're attacking me. You always twist things to make me the bad guy.",
+    text: "Olay izin değil, biz bir ekibiz. Ama sen kafana göre takılıyorsun.",
     pauseAfter: 1000,
   },
   {
     speaker: "A",
-    text: "There you go again. You always say that. We go in the same circles every single time.",
+    text: "Çünkü sen beni hiçbir zaman dinlemiyorsun. Hep kendi doğruların var.",
     pauseAfter: 800,
   },
   {
     speaker: "B",
-    text: "Because you always start it! You never take responsibility for your part.",
+    text: "Sen de hep savunmaya geçiyorsun! Bir kere de haklısın de artık.",
+    pauseAfter: 800,
+  },
+  {
+    speaker: "A",
+    text: "Haklı falan değilsin. Sadece beni kontrol etmeye çalışıyorsun.",
+    pauseAfter: 800,
+  },
+  {
+    speaker: "B",
+    text: "Kontrol mü? İyiliğimiz için uğraşmak kontrol mü oldu şimdi?",
+    pauseAfter: 800,
+  },
+  {
+    speaker: "A",
+    text: "Evet! Bu evde benim ne istediğim hiçbir zaman önemli olmadı zaten.",
     tripwire: "the_escalation",
-    pauseAfter: 800,
+    pauseAfter: 1000,
   },
 ];
 
 /**
- * Imago Dialogue demo: one full turn cycle through the structured protocol.
- * Sender speaks → Receiver mirrors → validates → empathizes → roles reverse.
+ * Imago Dialogue — Turkish dialogue.
+ * Ayşe opens her feelings, the system guides Burak from blame to mirroring.
+ * Structured: Sender → Mirroring → Validation → Empathy.
  */
 export const imagoDialogueScript: DemoTurn[] = [
-  // Sender phase (Partner A speaks)
+  // Sender phase — Ayşe shares her feelings
   {
     speaker: "A",
-    text: "When I come home after a long day and the house is quiet and dark, I feel invisible. Like my presence doesn't matter. I just want to feel welcomed.",
-    pauseAfter: 2000,
+    text: "Burak, dün akşam eve geldiğinde bilgisayarı açıp hemen çalışmaya başlaman beni çok kırdı. Kendimi bu evde görünmez gibi hissediyorum. En azından bir nasılsın demeni, benimle beş dakika oturmanı beklerdim. Benimle bağ kurmaman beni değersiz hissettiriyor.",
+    pauseAfter: 2500,
   },
-  // Mirroring phase (Partner B reflects)
+  // Mirroring phase — Burak reflects what he heard
   {
     speaker: "B",
-    text: "What I heard you say is that when you come home after a long day and the house is quiet and dark, you feel invisible. Like your presence doesn't matter. And you want to feel welcomed.",
-    pauseAfter: 2000,
+    text: "Duyduğum kadarıyla, dün akşam eve geldiğimde hemen bilgisayara geçmem seni çok kırmış. Evde kendini görünmez hissediyorsun ve en azından bir nasılsın dememi, seninle biraz oturmamı bekliyordun. Bağ kurmamam seni değersiz hissettirmiş.",
+    pauseAfter: 2500,
   },
-  // Validation phase (Partner B validates)
+  // Validation phase — Burak validates
   {
     speaker: "B",
-    text: "You make sense because everyone wants to feel seen when they come home. After a long day, of course you'd want to feel like your presence lights up the room. That makes complete sense to me.",
-    pauseAfter: 2000,
+    text: "Bu çok anlamlı çünkü herkes eve geldiğinde görülmek ve değer verilmek ister. Senin bu şekilde hissetmen tamamen anlaşılır bir şey. Haklısın, beş dakika bile olsa sana zaman ayırmalıydım.",
+    pauseAfter: 2500,
   },
-  // Empathy phase (Partner B empathizes)
+  // Empathy phase — Burak empathizes
   {
     speaker: "B",
-    text: "I imagine you might be feeling lonely and unseen. And maybe a little scared that we're drifting apart.",
+    text: "Sanırım şu an çok yalnız ve görünmez hissediyorsun. Belki de birbirimizden uzaklaşıyoruz diye korkuyorsun. Bu seni üzüyor ve hüzünlendiriyor.",
     pauseAfter: 2000,
   },
 ];
+
+/** Turkish intervention text overrides for demo mode */
+export const DEMO_INTERVENTIONS: Partial<Record<TripwireId, string>> = {
+  the_loop:
+    "Fark ediyorum ki daireler çizmeye başlıyoruz. Bu döngüye girdiğimizde, genellikle ikiniz de duyulmak için çok çabalıyorsunuz ama hiçbiriniz anlaşıldığını hissetmiyor. Bir nefes alalım.",
+  the_missed_drop:
+    "Burada nazikçe durdurmak istiyorum, çünkü çok önemli bir şey oldu. Az önce çok kırılgan bir duygu paylaşıldı. İlerlemeden önce o ana alan açalım.",
+  the_escalation:
+    "Burada duruyoruz. Konuşmanın sıcaklığı çok yükseldi ve birbirimize iyileştirmekten çok zarar verecek şekilde konuşuyoruz. Birlikte derin bir nefes alalım.",
+  the_stonewall:
+    "Konuşmayı durdurmak istiyorum. Her şeyin sessizleştiğini fark ediyorum. Bazen duygu çok yoğunlaştığında, sistemimizin kapanması doğaldır. Şu an çok bunaltıcı mı hissediyorsun?",
+};
 
 export const DEMO_SCRIPTS = {
   open_mediation_enactment: openMediationScript,
