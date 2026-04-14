@@ -59,8 +59,13 @@ const Onboarding = () => {
     // Update profile with couple_id
     await supabase.from("profiles").update({ couple_id: couple.id }).eq("id", user.id);
 
-    // Generate 6-char invite code
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // Generate 6-char invite code with cryptographic randomness
+    const array = new Uint8Array(6);
+    crypto.getRandomValues(array);
+    const code = Array.from(array)
+      .map(b => (b % 36).toString(36))
+      .join('')
+      .toUpperCase();
 
     const { error: inviteErr } = await supabase.from("couple_invites").insert({
       couple_id: couple.id,
@@ -86,43 +91,19 @@ const Onboarding = () => {
 
     const trimmedCode = inviteCode.trim().toUpperCase();
 
-    // Find pending invite
-    const { data: invite, error: findErr } = await supabase
-      .from("couple_invites")
-      .select("id, couple_id, invited_by")
-      .eq("invite_code", trimmedCode)
-      .eq("status", "pending")
-      .single();
+    // Use secure server-side RPC to accept invite
+    const { data, error } = await supabase.rpc("accept_invite", { _code: trimmedCode });
 
-    if (findErr || !invite) {
-      toast({ title: "Invalid code", description: "This invite code is invalid or has already been used.", variant: "destructive" });
+    if (error) {
+      const msg = error.message.includes("own invite")
+        ? "You can't use your own invite code."
+        : error.message.includes("Invalid") || error.message.includes("expired")
+        ? "This invite code is invalid or has already been used."
+        : error.message;
+      toast({ title: "Failed to join", description: msg, variant: "destructive" });
       setLoading(false);
       return;
     }
-
-    if (invite.invited_by === user.id) {
-      toast({ title: "Can't join", description: "You can't use your own invite code.", variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-
-    // Update couple with partner_b
-    const { error: coupleErr } = await supabase
-      .from("couples")
-      .update({ partner_b: user.id })
-      .eq("id", invite.couple_id);
-
-    if (coupleErr) {
-      toast({ title: "Error", description: coupleErr.message, variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-
-    // Update this user's profile
-    await supabase.from("profiles").update({ couple_id: invite.couple_id }).eq("id", user.id);
-
-    // Mark invite as accepted
-    await supabase.from("couple_invites").update({ status: "accepted" as const }).eq("id", invite.id);
 
     await refreshProfile();
     setLoading(false);
