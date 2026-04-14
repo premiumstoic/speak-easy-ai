@@ -1,5 +1,4 @@
 import { Mic, MicOff, AlertTriangle } from "lucide-react";
-import type { SessionState } from "@/hooks/useSessionState";
 
 interface PartnerZoneProps {
   partner: "A" | "B";
@@ -9,10 +8,10 @@ interface PartnerZoneProps {
   transcript: string;
   isSpeaking: boolean;
   speakingTimer: number;
+  maxRecordingTime: number;
   micLocked: boolean;
   strikeFlash: null | 1 | 2 | 3;
   strikeCount: number;
-  sessionState: SessionState;
   onStartSpeaking: () => void;
   onStopSpeaking: () => void;
 }
@@ -25,14 +24,15 @@ export function PartnerZone({
   transcript,
   isSpeaking,
   speakingTimer,
+  maxRecordingTime,
   micLocked,
   strikeFlash,
   strikeCount,
-  sessionState,
   onStartSpeaking,
   onStopSpeaking,
 }: PartnerZoneProps) {
-  const isWarning = speakingTimer >= 35 || strikeCount >= 2;
+  const warningThreshold = maxRecordingTime - 10;
+  const isWarning = speakingTimer >= warningThreshold || strikeCount >= 2;
 
   const getStrikeFlashClass = () => {
     if (!strikeFlash || !isActive) return "";
@@ -144,7 +144,7 @@ export function PartnerZone({
               ? "Waiting for turn"
               : isSpeaking
               ? isWarning
-                ? `${45 - speakingTimer}s left`
+                ? `${maxRecordingTime - speakingTimer}s left`
                 : "Release to stop"
               : "Hold to speak"}
           </p>

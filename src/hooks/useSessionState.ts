@@ -1,9 +1,8 @@
 import { useState, useCallback, useRef } from "react";
-
-export type SessionState = 0 | 1 | 2 | 3 | 4 | 5;
+import type { TherapyConfig, TherapyState } from "@/types/therapyConfig";
 
 export interface SessionData {
-  sessionState: SessionState;
+  currentStateKey: string;
   micLock: boolean;
   strikeCount: number;
   activePartner: "A" | "B";
@@ -25,9 +24,12 @@ const MOCK_WORDS = [
   "communication", "and", "mutual", "respect",
 ];
 
-export function useSessionState() {
+export function useSessionState(config: TherapyConfig) {
+  const initialState = config.states[config.initial_state];
+  const groundingDuration = initialState?.duration_seconds ?? 60;
+
   const [state, setState] = useState<SessionData>({
-    sessionState: 0,
+    currentStateKey: config.initial_state,
     micLock: true,
     strikeCount: 0,
     activePartner: "A",
@@ -35,7 +37,7 @@ export function useSessionState() {
     transcriptB: "",
     isSpeaking: false,
     speakingTimer: 0,
-    groundingTimer: 60,
+    groundingTimer: groundingDuration,
     strikeFlash: null,
     selectedEmotion: null,
   });
@@ -44,27 +46,41 @@ export function useSessionState() {
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wordIndexRef = useRef(0);
 
-  const startGrounding = useCallback(() => {
-    setState((s) => ({ ...s, sessionState: 0 as SessionState, groundingTimer: 60, micLock: true }));
-  }, []);
+  const getCurrentState = useCallback(
+    (key?: string): TherapyState | undefined => config.states[key ?? state.currentStateKey],
+    [config, state.currentStateKey]
+  );
+
+  const getMaxRecordingTime = useCallback(
+    (key?: string): number => {
+      const s = getCurrentState(key);
+      return s?.ui_config?.max_recording_time ?? 45;
+    },
+    [getCurrentState]
+  );
 
   const skipGrounding = useCallback(() => {
+    const currentState = config.states[config.initial_state];
+    const nextKey = currentState?.transitions?.on_complete ?? config.initial_state;
+    const nextState = config.states[nextKey];
     setState((s) => ({
       ...s,
-      sessionState: 1 as SessionState,
+      currentStateKey: nextKey,
       micLock: false,
-      activePartner: "A" as const,
+      activePartner: "A",
     }));
-  }, []);
+  }, [config]);
 
   const completeGrounding = useCallback(() => {
+    const currentState = config.states[config.initial_state];
+    const nextKey = currentState?.transitions?.on_complete ?? config.initial_state;
     setState((s) => ({
       ...s,
-      sessionState: 1 as SessionState,
+      currentStateKey: nextKey,
       micLock: false,
-      activePartner: "A" as const,
+      activePartner: "A",
     }));
-  }, []);
+  }, [config]);
 
   const startSpeaking = useCallback(() => {
     wordIndexRef.current = 0;
@@ -72,8 +88,9 @@ export function useSessionState() {
 
     timerIntervalRef.current = setInterval(() => {
       setState((s) => {
+        const maxTime = getMaxRecordingTime(s.currentStateKey);
         const newTimer = s.speakingTimer + 1;
-        if (newTimer >= 45) {
+        if (newTimer >= maxTime) {
           return { ...s, speakingTimer: newTimer, micLock: true, isSpeaking: false };
         }
         return { ...s, speakingTimer: newTimer };
@@ -92,7 +109,7 @@ export function useSessionState() {
         };
       });
     }, 300);
-  }, []);
+  }, [getMaxRecordingTime]);
 
   const stopSpeaking = useCallback(() => {
     if (speakingIntervalRef.current) clearInterval(speakingIntervalRef.current);
@@ -102,47 +119,62 @@ export function useSessionState() {
 
   const advanceState = useCallback(() => {
     setState((s) => {
-      const next = s.sessionState + 1;
-      if (next > 5) {
-        // Role reversal complete, restart cycle
+      const currentTherapyState = config.states[s.currentStateKey];
+      if (!currentTherapyState) return s;
+
+      const nextKey =
+        currentTherapyState.transitions.on_complete ??
+        currentTherapyState.transitions.on_pass ??
+        s.currentStateKey;
+
+      const nextTherapyState = config.states[nextKey];
+      if (!nextTherapyState) return s;
+
+      // Role reversal: swap active partner and restart cycle
+      if (currentTherapyState.type === "role_reversal") {
         return {
           ...s,
-          sessionState: 1 as SessionState,
+          currentStateKey: nextKey,
           activePartner: s.activePartner === "A" ? "B" as const : "A" as const,
           micLock: false,
           strikeCount: 0,
           transcriptA: "",
           transcriptB: "",
           selectedEmotion: null,
+          isSpeaking: false,
+          speakingTimer: 0,
         };
       }
 
-      const isReceiverTurn = next >= 2 && next <= 4;
+      // For RECEIVER states, the active partner is the opposite of the current sender
+      const isReceiverTurn = nextTherapyState.active_role === "RECEIVER";
+
       return {
         ...s,
-        sessionState: next as SessionState,
-        activePartner: isReceiverTurn
-          ? (s.activePartner === "A" ? "B" as const : "A" as const)
-          : s.activePartner,
+        currentStateKey: nextKey,
         micLock: false,
         isSpeaking: false,
         speakingTimer: 0,
       };
     });
-  }, []);
+  }, [config]);
 
   const triggerStrike = useCallback(() => {
     setState((s) => {
       const newCount = s.strikeCount + 1;
+      // Find the first sender state for hard cut reset
+      const senderKey = Object.keys(config.states).find(
+        (k) => config.states[k].active_role === "SENDER"
+      ) ?? s.currentStateKey;
+
       if (newCount >= 3) {
-        // Hard cut
         return {
           ...s,
           strikeCount: 0,
           strikeFlash: 3 as const,
           micLock: true,
           isSpeaking: false,
-          sessionState: 1 as SessionState,
+          currentStateKey: senderKey,
           activePartner: s.activePartner === "A" ? "B" as const : "A" as const,
           transcriptA: "",
           transcriptB: "",
@@ -155,11 +187,10 @@ export function useSessionState() {
       };
     });
 
-    // Clear flash after animation
     setTimeout(() => {
       setState((s) => ({ ...s, strikeFlash: null }));
     }, 800);
-  }, []);
+  }, [config]);
 
   const selectEmotion = useCallback((emotion: string) => {
     setState((s) => ({ ...s, selectedEmotion: emotion }));
@@ -167,7 +198,9 @@ export function useSessionState() {
 
   return {
     state,
-    startGrounding,
+    config,
+    getCurrentState,
+    getMaxRecordingTime,
     skipGrounding,
     completeGrounding,
     startSpeaking,

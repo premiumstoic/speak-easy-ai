@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Wind, SkipForward } from "lucide-react";
 
 interface GroundingOverlayProps {
+  durationSeconds?: number;
   onComplete: () => void;
   onSkip: () => void;
 }
 
-export function GroundingOverlay({ onComplete, onSkip }: GroundingOverlayProps) {
-  const [timer, setTimer] = useState(60);
+export function GroundingOverlay({ durationSeconds = 60, onComplete, onSkip }: GroundingOverlayProps) {
+  const [timer, setTimer] = useState(durationSeconds);
   const [thumbsHeld, setThumbsHeld] = useState({ left: false, right: false });
   const [phase, setPhase] = useState<"inhale" | "exhale">("inhale");
 
