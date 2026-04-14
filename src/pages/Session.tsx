@@ -21,7 +21,8 @@ const PROTOCOLS: Record<string, typeof imagoProtocol> = {
 };
 
 function buildObserverUrl(sessionId: string): string | null {
-  const configuredBase = import.meta.env.VITE_OBSERVER_URL || "http://localhost:8081";
+  const configuredBase =
+    import.meta.env.VITE_OBSERVER_URL || "https://umay-demo.lovable.app";
 
   try {
     const url = new URL(configuredBase, window.location.origin);
