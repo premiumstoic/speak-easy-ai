@@ -92,7 +92,19 @@ const Onboarding = () => {
     const trimmedCode = inviteCode.trim().toUpperCase();
 
     // Use secure server-side RPC to accept invite
-    const { data, error } = await supabase.rpc("accept_invite", { _code: trimmedCode });
+    console.log("[Onboarding] Calling accept_invite with code:", trimmedCode);
+    let data, error;
+    try {
+      const result = await supabase.rpc("accept_invite", { _code: trimmedCode });
+      data = result.data;
+      error = result.error;
+      console.log("[Onboarding] accept_invite result:", { data, error });
+    } catch (e) {
+      console.error("[Onboarding] accept_invite threw:", e);
+      toast({ title: "Failed to join", description: "Something went wrong. Please try again.", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
 
     if (error) {
       const msg = error.message.includes("own invite")
