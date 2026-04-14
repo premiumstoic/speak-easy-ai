@@ -1,6 +1,7 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSessionState } from "@/hooks/useSessionState";
 import { useTherapyLogger } from "@/hooks/useTherapyLogger";
+import { useFalStreaming } from "@/hooks/useFalStreaming";
 import { useAuth } from "@/contexts/AuthContext";
 import { GroundingOverlay } from "@/components/GroundingOverlay";
 import { PartnerZone } from "@/components/PartnerZone";
@@ -12,7 +13,7 @@ import { openMediationProtocol } from "@/data/openMediationProtocol";
 import { toast } from "sonner";
 import { Bug, X, AlertTriangle } from "lucide-react";
 import UmayLogo from "@/components/UmayLogo";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
   imago_core_dialogue: imagoProtocol,
