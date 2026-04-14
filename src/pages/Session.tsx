@@ -14,6 +14,7 @@ import { Bug, X, AlertTriangle, ExternalLink } from "lucide-react";
 import UmayLogo from "@/components/UmayLogo";
 import { useCallback, useMemo, useEffect, useRef } from "react";
 import { TRIPWIRE_IDS, type TripwireId } from "@/types/therapyEvents";
+import { useUmayVoice } from "@/hooks/useUmayVoice";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
   imago_core_dialogue: imagoProtocol,
@@ -66,10 +67,12 @@ const Session = () => {
   const { isSessionComplete, completedTurns } = state;
   const hasHandledCompletionRef = useRef(false);
 
-  const { logAnalysisTick, logTurn, logIntervention } = useTherapyLogger(
+  const { logTurn, logIntervention } = useTherapyLogger(
     sessionId,
     techniqueId
   );
+
+  const { speakIntervention, isSpeaking: aiIsSpeaking } = useUmayVoice();
 
   const {
     transcript: sttTranscript,
@@ -83,9 +86,7 @@ const Session = () => {
     error: sttError,
   } = useFalStreaming();
 
-  const chunkIndexRef = useRef(0);
-  const lastChunkTranscriptRef = useRef("");
-  const tickInFlightRef = useRef(false);
+  const turnIndexRef = useRef(0);
   const interventionInFlightRef = useRef(false);
 
   // Sync STT transcript into session state
@@ -123,6 +124,17 @@ const Session = () => {
   const isIntervention = currentTherapyState?.type === "system_interruption";
   const isOpenMediationTechnique = techniqueId === "open_mediation_enactment";
 
+  // Auto-complete intervention when TTS finishes speaking
+  const prevAiSpeakingRef = useRef(false);
+  useEffect(() => {
+    const wasSpeaking = prevAiSpeakingRef.current;
+    prevAiSpeakingRef.current = aiIsSpeaking;
+
+    if (wasSpeaking && !aiIsSpeaking && isIntervention) {
+      completeIntervention();
+    }
+  }, [aiIsSpeaking, isIntervention, completeIntervention]);
+
   const getActiveSpeakerAndTranscript = useCallback(() => {
     const speaker = state.activePartner === "A" ? "Partner A" : "Partner B";
     const transcript =
@@ -152,7 +164,7 @@ const Session = () => {
       interventionInFlightRef.current = true;
       try {
         if (sttIsRecording) {
-          const finalTranscript = await stopRecording();
+          const { transcript: finalTranscript } = await stopRecording();
           if (finalTranscript) {
             setTranscript(finalTranscript);
           }
@@ -167,6 +179,9 @@ const Session = () => {
 
         await logIntervention(text);
         triggerIntervention(tripwireId);
+
+        // Fire TTS — don't await; the effect below auto-completes when speech ends
+        void speakIntervention(text);
       } finally {
         interventionInFlightRef.current = false;
       }
@@ -180,34 +195,34 @@ const Session = () => {
       protocol,
       logIntervention,
       triggerIntervention,
+      speakIntervention,
     ]
   );
 
   // Combined start: session state + real mic
   const handleStartSpeaking = useCallback(() => {
-    chunkIndexRef.current = 0;
-    lastChunkTranscriptRef.current = "";
-
     startSpeaking();
     void startRecording();
   }, [startSpeaking, startRecording]);
 
   // Combined stop: stop mic, get final transcript, send final event, then stop session state
   const handleStopSpeaking = useCallback(async () => {
-    const finalTranscript = await stopRecording();
+    const { transcript: finalTranscript, audioBlob } = await stopRecording();
     if (finalTranscript) {
       setTranscript(finalTranscript);
     }
 
     const { speaker, transcript: currentTranscript } = getActiveSpeakerAndTranscript();
     const transcript = finalTranscript || currentTranscript;
-    const chunkIndex = chunkIndexRef.current > 0 ? chunkIndexRef.current - 1 : null;
+    const chunkIndex = turnIndexRef.current;
+    turnIndexRef.current += 1;
 
     const decision = await logTurn(
       speaker,
       transcript,
       state.currentStateKey,
-      chunkIndex
+      chunkIndex,
+      isOpenMediationTechnique ? audioBlob : null
     );
 
     stopSpeaking();
@@ -228,60 +243,6 @@ const Session = () => {
     state.currentStateKey,
     stopSpeaking,
     isOpenMediationTechnique,
-    handleTriggerIntervention,
-  ]);
-
-  // Stream chunk analysis every 2s while actively speaking in Open Mediation
-  useEffect(() => {
-    if (!isOpenMediationTechnique || !state.isSpeaking || isIntervention) {
-      return;
-    }
-
-    const intervalId = window.setInterval(async () => {
-      if (tickInFlightRef.current || interventionInFlightRef.current) {
-        return;
-      }
-
-      const { speaker, transcript } = getActiveSpeakerAndTranscript();
-      const trimmed = transcript.trim();
-      if (!trimmed || trimmed === lastChunkTranscriptRef.current) {
-        return;
-      }
-
-      tickInFlightRef.current = true;
-      try {
-        const decision = await logAnalysisTick(
-          speaker,
-          trimmed,
-          state.currentStateKey,
-          chunkIndexRef.current
-        );
-
-        lastChunkTranscriptRef.current = trimmed;
-        chunkIndexRef.current += 1;
-
-        if (
-          decision?.action_decision === "interrupt" &&
-          decision.detected_tripwire &&
-          state.currentStateKey !== "state_ai_intervention"
-        ) {
-          await handleTriggerIntervention(decision.detected_tripwire);
-        }
-      } finally {
-        tickInFlightRef.current = false;
-      }
-    }, 2000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [
-    isOpenMediationTechnique,
-    state.isSpeaking,
-    isIntervention,
-    getActiveSpeakerAndTranscript,
-    logAnalysisTick,
-    state.currentStateKey,
     handleTriggerIntervention,
   ]);
 
@@ -369,6 +330,7 @@ const Session = () => {
         <HearthOrb
           orbState={currentTherapyState?.ui_config?.orb_state ?? "pulsing_listening"}
           isSpeaking={state.isSpeaking}
+          aiSpeaking={aiIsSpeaking}
           micLocked={state.micLock || isIntervention}
           onStartSpeaking={handleStartSpeaking}
           onStopSpeaking={handleStopSpeaking}
@@ -384,6 +346,7 @@ const Session = () => {
           <AIInterventionOverlay
             tripwireId={state.activeTripwire}
             interventionText={interventionText}
+            aiSpeaking={aiIsSpeaking}
             onComplete={completeIntervention}
           />
         )}

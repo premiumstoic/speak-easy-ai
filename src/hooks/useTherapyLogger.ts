@@ -12,6 +12,7 @@ interface LogInput {
   stateKey: string;
   eventType: TherapyEventType;
   chunkIndex: number | null;
+  audioBlob?: Blob | null;
 }
 
 function isDecisionResponse(value: unknown): value is TherapyDecisionResponse {
@@ -27,14 +28,80 @@ function isDecisionResponse(value: unknown): value is TherapyDecisionResponse {
 }
 
 export function useTherapyLogger(sessionId: string, techniqueId: string) {
+  const uploadAudioBlob = useCallback(
+    async (
+      audioBlob: Blob,
+      speaker: string,
+      eventType: TherapyEventType
+    ): Promise<{ audioUrl: string; path: string } | null> => {
+      if (audioBlob.size < 500) return null;
+
+      const speakerSlug = speaker.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      const ext = audioBlob.type.includes("wav")
+        ? "wav"
+        : audioBlob.type.includes("mp4")
+          ? "mp4"
+          : audioBlob.type.includes("mpeg")
+            ? "mp3"
+            : "webm";
+      const filePath = `${sessionId}/${speakerSlug || "speaker"}-${eventType}-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("therapy_audio")
+        .upload(filePath, audioBlob, {
+          upsert: false,
+          contentType: audioBlob.type || undefined,
+          cacheControl: "3600",
+        });
+
+      if (uploadError) {
+        console.warn("[TherapyLogger] storage upload failed:", uploadError.message);
+        return null;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("therapy_audio").getPublicUrl(filePath);
+
+      if (!publicUrl) {
+        console.warn("[TherapyLogger] storage public URL is empty");
+        return null;
+      }
+
+      return { audioUrl: publicUrl, path: filePath };
+    },
+    [sessionId]
+  );
+
   const log = useCallback(
     async (entry: LogInput): Promise<TherapyDecisionResponse | null> => {
+      let uploadedAudio: { audioUrl: string; path: string } | null = null;
+      if (entry.audioBlob && techniqueId === "open_mediation_enactment") {
+        uploadedAudio = await uploadAudioBlob(entry.audioBlob, entry.speaker, entry.eventType);
+      }
+
+      const safeTranscript =
+        entry.transcript.trim().length > 0
+          ? entry.transcript
+          : uploadedAudio
+            ? "[audio turn captured]"
+            : "";
+
+      if (!safeTranscript.trim()) {
+        console.warn("[TherapyLogger] skipping log entry with empty transcript and no uploaded audio");
+        return null;
+      }
+
       const payload: TherapyEventRequest = {
         session_id: sessionId,
         technique_id: techniqueId,
         state_key: entry.stateKey,
         speaker: entry.speaker,
-        transcript: entry.transcript,
+        transcript: safeTranscript,
+        audio_url: uploadedAudio?.audioUrl ?? null,
+        audio_path: uploadedAudio?.path ?? null,
         event_type: entry.eventType,
         chunk_index: entry.chunkIndex,
         client_ts: new Date().toISOString(),
@@ -56,7 +123,7 @@ export function useTherapyLogger(sessionId: string, techniqueId: string) {
 
       return data;
     },
-    [sessionId, techniqueId]
+    [sessionId, techniqueId, uploadAudioBlob]
   );
 
   const logAnalysisTick = useCallback(
@@ -83,15 +150,17 @@ export function useTherapyLogger(sessionId: string, techniqueId: string) {
       speaker: "Partner A" | "Partner B",
       transcript: string,
       stateKey: string,
-      chunkIndex: number | null
+      chunkIndex: number | null,
+      audioBlob?: Blob | null
     ): Promise<TherapyDecisionResponse | null> => {
-      if (!transcript.trim()) return null;
+      if (!transcript.trim() && !audioBlob) return null;
       return log({
         speaker,
         transcript,
         stateKey,
         eventType: "turn_final",
         chunkIndex,
+        audioBlob: audioBlob ?? null,
       });
     },
     [log]

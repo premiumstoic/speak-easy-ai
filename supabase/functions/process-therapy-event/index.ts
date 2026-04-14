@@ -15,6 +15,7 @@ const TRIPWIRE_IDS = [
 type TripwireId = (typeof TRIPWIRE_IDS)[number];
 type EventType = "analysis_tick" | "turn_final";
 type ActionDecision = "interrupt" | "null";
+type DecisionResolutionSource = "fal_audio" | "openai_text" | "heuristic" | "not_applicable";
 
 export interface TherapyEventRequest {
   session_id: string;
@@ -22,6 +23,8 @@ export interface TherapyEventRequest {
   state_key: string;
   speaker: string;
   transcript: string;
+  audio_url?: string | null;
+  audio_path?: string | null;
   event_type: EventType;
   chunk_index: number | null;
   client_ts: string;
@@ -96,6 +99,15 @@ function isTripwireId(value: unknown): value is TripwireId {
   return typeof value === "string" && (TRIPWIRE_IDS as readonly string[]).includes(value);
 }
 
+function isHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function validatePayload(payload: unknown):
   | { ok: true; value: TherapyEventRequest }
   | { ok: false; error: string } {
@@ -135,6 +147,18 @@ export function validatePayload(payload: unknown):
     return { ok: false, error: "Invalid 'client_ts'." };
   }
 
+  const audioUrl = candidate.audio_url;
+  if (
+    !(audioUrl === undefined || audioUrl === null || (typeof audioUrl === "string" && isHttpUrl(audioUrl)))
+  ) {
+    return { ok: false, error: "Invalid 'audio_url'. Must be a valid http(s) URL or null." };
+  }
+
+  const audioPath = candidate.audio_path;
+  if (!(audioPath === undefined || audioPath === null || typeof audioPath === "string")) {
+    return { ok: false, error: "Invalid 'audio_path'. Must be a string or null." };
+  }
+
   return {
     ok: true,
     value: {
@@ -143,6 +167,8 @@ export function validatePayload(payload: unknown):
       state_key: candidate.state_key as string,
       speaker: candidate.speaker as string,
       transcript: candidate.transcript as string,
+      audio_url: (candidate.audio_url as string | null | undefined) ?? null,
+      audio_path: (candidate.audio_path as string | null | undefined) ?? null,
       event_type: candidate.event_type as EventType,
       chunk_index: candidate.chunk_index as number | null,
       client_ts: candidate.client_ts as string,
@@ -194,6 +220,16 @@ function extractOutputText(openAIResponse: unknown): string {
   }
 
   return chunks.join("\n");
+}
+
+function extractFalOutputText(falResponse: unknown): string {
+  if (!falResponse || typeof falResponse !== "object") return "";
+  const payload = falResponse as Record<string, unknown>;
+  const direct = payload.output;
+  if (typeof direct === "string" && direct.trim()) {
+    return direct;
+  }
+  return "";
 }
 
 export function normalizeDecision(candidate: DecisionCandidate): Omit<TherapyDecisionResponse, "persisted_log_id"> {
@@ -269,14 +305,13 @@ export function heuristicDecision(transcript: string): Omit<TherapyDecisionRespo
 }
 
 async function decideWithModelIfConfigured(
-  payload: TherapyEventRequest,
-  fallback: Omit<TherapyDecisionResponse, "persisted_log_id">
-): Promise<Omit<TherapyDecisionResponse, "persisted_log_id">> {
+  payload: TherapyEventRequest
+): Promise<DecisionCandidate | null> {
   const openAIKey = Deno.env.get("OPENAI_API_KEY");
   const openAIModel = Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini";
 
   if (!openAIKey) {
-    return fallback;
+    return null;
   }
 
   const prompt = [
@@ -311,37 +346,117 @@ async function decideWithModelIfConfigured(
     });
 
     if (!response.ok) {
-      return fallback;
+      return null;
     }
 
     const data = await response.json();
     const text = extractOutputText(data);
     const parsed = extractFirstJsonObject(text);
     if (!parsed) {
-      return fallback;
+      return null;
     }
 
-    return normalizeDecision(parsed);
+    return parsed;
   } catch {
-    return fallback;
+    return null;
+  }
+}
+
+async function decideWithFalAudioIfConfigured(
+  payload: TherapyEventRequest
+): Promise<DecisionCandidate | null> {
+  const falKey = Deno.env.get("FAL_KEY") ?? Deno.env.get("VITE_FAL_KEY");
+  const falModel = Deno.env.get("FAL_AUDIO_MODEL") ?? "openai/gpt-4o-audio-preview";
+
+  if (!falKey || !payload.audio_url) {
+    return null;
+  }
+
+  const systemPrompt = [
+    "You are an expert Clinical Process Observer operating within an Emotionally Focused Therapy and Structural Family Therapy framework.",
+    "You are monitoring a live, unmediated partner exchange.",
+    "Prime directive: maintain SILENCE 95% of the time.",
+    "Do not intervene for ordinary disagreement.",
+    "You may intervene only for these tripwires:",
+    "1) the_loop, 2) the_missed_drop, 3) the_escalation, 4) the_stonewall.",
+    "You must evaluate both semantics and acoustic evidence (tone, pacing, intensity, withdrawal).",
+    "Return strict JSON only with keys:",
+    "action_decision (interrupt|null), confidence_score (0..1), detected_tripwire (the_loop|the_missed_drop|the_escalation|the_stonewall|null), reasoning_summary (<=180 chars).",
+    `If confidence_score is below ${CONFIDENCE_THRESHOLD}, action_decision must be 'null'.`,
+    "No markdown.",
+  ].join("\n");
+
+  const prompt = [
+    `Speaker: ${payload.speaker}`,
+    `State: ${payload.state_key}`,
+    `Event type: ${payload.event_type}`,
+    `Text hint (may be partial): ${payload.transcript}`,
+    "Analyze the provided audio and return the JSON decision.",
+  ].join("\n");
+
+  try {
+    const response = await fetch("https://fal.run/openrouter/router/audio", {
+      method: "POST",
+      headers: {
+        Authorization: `Key ${falKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: falModel,
+        audio_url: payload.audio_url,
+        system_prompt: systemPrompt,
+        prompt,
+        temperature: 0,
+      }),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const text = extractFalOutputText(data);
+    if (!text) {
+      return null;
+    }
+
+    const parsed = extractFirstJsonObject(text);
+    return parsed;
+  } catch {
+    return null;
   }
 }
 
 async function resolveDecision(
   payload: TherapyEventRequest
-): Promise<Omit<TherapyDecisionResponse, "persisted_log_id">> {
+): Promise<{
+  decision: Omit<TherapyDecisionResponse, "persisted_log_id">;
+  source: DecisionResolutionSource;
+}> {
   if (payload.technique_id !== "open_mediation_enactment") {
     return {
-      action_decision: "null",
-      confidence_score: 0,
-      detected_tripwire: null,
-      reasoning_summary: "Technique does not require live tripwire intervention.",
+      decision: {
+        action_decision: "null",
+        confidence_score: 0,
+        detected_tripwire: null,
+        reasoning_summary: "Technique does not require live tripwire intervention.",
+      },
+      source: "not_applicable",
     };
   }
 
   const heuristic = heuristicDecision(payload.transcript);
-  const modelDecision = await decideWithModelIfConfigured(payload, heuristic);
-  return normalizeDecision(modelDecision);
+  const falAudioDecision = await decideWithFalAudioIfConfigured(payload);
+  if (falAudioDecision) {
+    return { decision: normalizeDecision(falAudioDecision), source: "fal_audio" };
+  }
+
+  const modelDecision = await decideWithModelIfConfigured(payload);
+  if (modelDecision) {
+    return { decision: normalizeDecision(modelDecision), source: "openai_text" };
+  }
+
+  return { decision: normalizeDecision(heuristic), source: "heuristic" };
 }
 
 function withJson(status: number, body: Record<string, unknown>): Response {
@@ -403,7 +518,7 @@ export async function handler(req: Request): Promise<Response> {
   }
 
   const payload = validation.value;
-  const decision = await resolveDecision(payload);
+  const { decision, source } = await resolveDecision(payload);
 
   const aiAnalysis = {
     event_type: payload.event_type,
@@ -415,6 +530,9 @@ export async function handler(req: Request): Promise<Response> {
     detected_tripwire: decision.detected_tripwire,
     confidence_score: decision.confidence_score,
     reasoning_summary: decision.reasoning_summary,
+    audio_url: payload.audio_url ?? null,
+    audio_path: payload.audio_path ?? null,
+    decision_source: source,
     processed_at: new Date().toISOString(),
   };
 

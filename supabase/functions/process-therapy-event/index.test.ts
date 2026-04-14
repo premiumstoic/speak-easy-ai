@@ -18,6 +18,8 @@ Deno.test("validatePayload accepts correct body", () => {
     state_key: "state_open_floor",
     speaker: "Partner A",
     transcript: "I feel ignored.",
+    audio_url: "https://example.com/audio.webm",
+    audio_path: "demo/path/audio.webm",
     event_type: "analysis_tick",
     chunk_index: 0,
     client_ts: new Date().toISOString(),

@@ -17,8 +17,9 @@ interface UseFalStreamingReturn {
   audioLevel: number;
   isRecording: boolean;
   isTranscribing: boolean;
+  latestAudioBlob: Blob | null;
   startRecording: () => Promise<void>;
-  stopRecording: () => Promise<string>;
+  stopRecording: () => Promise<{ transcript: string; audioBlob: Blob | null }>;
   error: string | null;
 }
 
@@ -30,6 +31,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [latestAudioBlob, setLatestAudioBlob] = useState<Blob | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -102,6 +104,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
     linesRef.current = [];
     chunksRef.current = [];
     isStoppingRef.current = false;
+    setLatestAudioBlob(null);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -188,7 +191,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
     }
   }, []);
 
-  const stopRecording = useCallback(async (): Promise<string> => {
+  const stopRecording = useCallback(async (): Promise<{ transcript: string; audioBlob: Blob | null }> => {
     isStoppingRef.current = true;
 
     // Stop Web Speech immediately
@@ -198,18 +201,21 @@ export function useFalStreaming(): UseFalStreamingReturn {
     }
     setInterimTranscript("");
 
-    return new Promise<string>((resolve) => {
+    return new Promise<{ transcript: string; audioBlob: Blob | null }>((resolve) => {
       const recorder = mediaRecorderRef.current;
       if (!recorder || recorder.state === "inactive") {
         setIsRecording(false);
+        const blob = getAccumulatedBlob();
+        setLatestAudioBlob(blob);
         cleanup();
-        resolve(transcriptRef.current);
+        resolve({ transcript: transcriptRef.current, audioBlob: blob });
         return;
       }
 
       recorder.onstop = async () => {
         setIsRecording(false);
         const finalBlob = getAccumulatedBlob();
+        setLatestAudioBlob(finalBlob);
 
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((t) => t.stop());
@@ -217,7 +223,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
         }
 
         if (!finalBlob || finalBlob.size < 500) {
-          resolve(transcriptRef.current);
+          resolve({ transcript: transcriptRef.current, audioBlob: finalBlob });
           return;
         }
 
@@ -235,12 +241,23 @@ export function useFalStreaming(): UseFalStreamingReturn {
             setLines([falText]);
           }
         }
-        resolve(transcriptRef.current);
+        resolve({ transcript: transcriptRef.current, audioBlob: finalBlob });
       };
 
       recorder.stop();
     });
   }, [cleanup, transcribeBlob, getAccumulatedBlob]);
 
-  return { transcript, lines, interimTranscript, audioLevel, isRecording, isTranscribing, startRecording, stopRecording, error };
+  return {
+    transcript,
+    lines,
+    interimTranscript,
+    audioLevel,
+    isRecording,
+    isTranscribing,
+    latestAudioBlob,
+    startRecording,
+    stopRecording,
+    error,
+  };
 }

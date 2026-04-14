@@ -3,6 +3,7 @@ import { Mic, MicOff } from "lucide-react";
 interface HearthOrbProps {
   orbState: "pulsing_listening" | "expanded_speaking_amber";
   isSpeaking: boolean;
+  aiSpeaking?: boolean;
   micLocked: boolean;
   onStartSpeaking: () => void;
   onStopSpeaking: () => void;
@@ -16,6 +17,7 @@ interface HearthOrbProps {
 export const HearthOrb = ({
   orbState,
   isSpeaking,
+  aiSpeaking = false,
   micLocked,
   onStartSpeaking,
   onStopSpeaking,
@@ -53,15 +55,26 @@ export const HearthOrb = ({
         onClick={handleMicToggle}
         disabled={micLocked}
         className={`relative z-10 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
-          isAmber
+          aiSpeaking
+            ? "w-52 h-52 bg-gradient-to-br from-tertiary to-tertiary-container soft-shadow-lg"
+            : isAmber
             ? "w-48 h-48 bg-gradient-to-br from-tertiary to-tertiary-container soft-shadow-lg"
             : isSpeaking
             ? "w-44 h-44 bg-gradient-to-br from-primary to-primary-dim soft-shadow-lg scale-105"
             : "w-40 h-40 bg-gradient-to-br from-primary to-primary-dim soft-shadow"
         } ${micLocked ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:scale-[1.03] active:scale-95"}`}
       >
+        {/* AI TTS pulse rings (Siri/Alexa style) */}
+        {aiSpeaking && (
+          <>
+            <div className="absolute inset-[-12px] rounded-full border-2 border-tertiary/40 animate-[ping_2s_ease-out_infinite]" />
+            <div className="absolute inset-[-24px] rounded-full border border-tertiary/20 animate-[ping_2s_ease-out_0.5s_infinite]" />
+            <div className="absolute inset-[-36px] rounded-full border border-tertiary/10 animate-[ping_2s_ease-out_1s_infinite]" />
+          </>
+        )}
+
         {/* Live audio level ring */}
-        {isSpeaking && (
+        {isSpeaking && !aiSpeaking && (
           <div
             className="absolute rounded-full border-2 border-primary-foreground/40 transition-all duration-75"
             style={{

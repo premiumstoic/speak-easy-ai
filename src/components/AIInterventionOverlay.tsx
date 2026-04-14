@@ -4,6 +4,7 @@ import UmayLogo from "@/components/UmayLogo";
 interface AIInterventionOverlayProps {
   tripwireId: string;
   interventionText: string;
+  aiSpeaking?: boolean;
   onComplete: () => void;
 }
 
@@ -41,6 +42,7 @@ const TRIPWIRE_LABELS: Record<string, string> = {
 export const AIInterventionOverlay = ({
   tripwireId,
   interventionText,
+  aiSpeaking = false,
   onComplete,
 }: AIInterventionOverlayProps) => {
   const [phase, setPhase] = useState<"chime" | "speaking" | "done">("chime");
@@ -80,11 +82,19 @@ export const AIInterventionOverlay = ({
       {/* Orb icon */}
       <div
         className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center mb-8 transition-all duration-700 ${
-          phase === "chime"
+          aiSpeaking
+            ? "bg-tertiary/30 scale-110"
+            : phase === "chime"
             ? "bg-tertiary/20 scale-110 animate-pulse"
             : "bg-tertiary/30 scale-100"
         }`}
       >
+        {aiSpeaking && (
+          <>
+            <div className="absolute inset-[-8px] rounded-full border-2 border-tertiary/40 animate-[ping_2s_ease-out_infinite]" />
+            <div className="absolute inset-[-18px] rounded-full border border-tertiary/20 animate-[ping_2s_ease-out_0.5s_infinite]" />
+          </>
+        )}
         <UmayLogo className="w-10 h-10 text-tertiary" />
       </div>
 

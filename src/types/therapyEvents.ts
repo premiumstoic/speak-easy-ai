@@ -16,6 +16,8 @@ export interface TherapyEventRequest {
   state_key: string;
   speaker: string;
   transcript: string;
+  audio_url?: string | null;
+  audio_path?: string | null;
   event_type: TherapyEventType;
   chunk_index: number | null;
   client_ts: string;

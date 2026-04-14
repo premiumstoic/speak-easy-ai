@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:ai": "node scripts/test-ai-stack.mjs"
   },
   "dependencies": {
     "@fal-ai/client": "^1.9.5",
