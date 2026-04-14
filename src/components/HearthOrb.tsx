@@ -100,8 +100,8 @@ export const HearthOrb = ({
         </div>
       )}
 
-      {/* Live transcription ticker */}
-      {isSpeaking && (
+      {/* Live transcription ticker — stays visible while speaking or after FAL returns */}
+      {(isSpeaking || liveLines.length > 0 || !!liveInterim) && (
         <div className="mt-6 max-w-md w-full rounded-2xl bg-surface-container/60 backdrop-blur-sm px-4 py-3 max-h-28 overflow-y-auto flex flex-col gap-1">
           {liveLines.slice(-4).map((line, i) => (
             <p key={i} className="text-sm font-body text-foreground/60 leading-snug">{line}</p>
@@ -112,7 +112,7 @@ export const HearthOrb = ({
               <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 align-text-bottom" style={{ animation: "pulse-soft 1s infinite" }} />
             </p>
           )}
-          {!liveLines.length && !liveInterim && (
+          {isSpeaking && !liveLines.length && !liveInterim && (
             <p className="text-sm font-body text-foreground/30 italic">Listening…</p>
           )}
         </div>

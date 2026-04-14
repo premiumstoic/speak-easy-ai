@@ -220,6 +220,12 @@ export function useFalStreaming(): UseFalStreamingReturn {
         if (falText) {
           transcriptRef.current = falText;
           setTranscript(falText);
+          // On devices without Web Speech API (e.g. iOS), lines will be empty —
+          // populate from FAL result so the ticker has something to show
+          if (linesRef.current.length === 0) {
+            linesRef.current = [falText];
+            setLines([falText]);
+          }
         }
         resolve(transcriptRef.current);
       };

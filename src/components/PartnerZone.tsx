@@ -98,7 +98,7 @@ export function PartnerZone({
           </div>
         </div>
 
-        {/* Live transcription ticker */}
+        {/* Live transcription ticker — shown while recording */}
         {isActive && isLiveRecording && (
           <div className="max-w-xs w-full px-4">
             <div className="rounded-xl bg-surface-container/70 backdrop-blur-sm px-3 py-2 max-h-20 overflow-y-auto flex flex-col gap-0.5">
@@ -115,6 +115,15 @@ export function PartnerZone({
                 <p className="text-xs text-on-surface-variant/40 italic">Listening…</p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Final transcript — shown after recording stops */}
+        {isActive && !isLiveRecording && transcript && (
+          <div className="max-w-xs text-center px-4">
+            <p className="text-sm leading-relaxed text-on-surface-variant font-light line-clamp-3">
+              {transcript}
+            </p>
           </div>
         )}
 
