@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { fal } from "@fal-ai/client";
 
+const HARDCODED_FAL_KEY = "304998f9-4b85-480a-8110-4902ad069841:87b17f14c88fafbfb4e0490c9de7ee95";
+
 fal.config({
-  credentials: import.meta.env.VITE_FAL_KEY,
+  credentials: import.meta.env.VITE_FAL_KEY || HARDCODED_FAL_KEY,
 });
 
 const SpeechRecognition =
