@@ -13,6 +13,7 @@ export interface SessionData {
   groundingTimer: number;
   strikeFlash: null | 1 | 2 | 3;
   selectedEmotion: string | null;
+  activeTripwire: string | null;
 }
 
 const MOCK_WORDS = [
@@ -30,7 +31,7 @@ export function useSessionState(config: TherapyConfig) {
 
   const [state, setState] = useState<SessionData>({
     currentStateKey: config.initial_state,
-    micLock: true,
+    micLock: initialState?.type === "breathing_exercise",
     strikeCount: 0,
     activePartner: "A",
     transcriptA: "",
@@ -40,6 +41,7 @@ export function useSessionState(config: TherapyConfig) {
     groundingTimer: groundingDuration,
     strikeFlash: null,
     selectedEmotion: null,
+    activeTripwire: null,
   });
 
   const speakingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -62,7 +64,6 @@ export function useSessionState(config: TherapyConfig) {
   const skipGrounding = useCallback(() => {
     const currentState = config.states[config.initial_state];
     const nextKey = currentState?.transitions?.on_complete ?? config.initial_state;
-    const nextState = config.states[nextKey];
     setState((s) => ({
       ...s,
       currentStateKey: nextKey,
@@ -81,6 +82,11 @@ export function useSessionState(config: TherapyConfig) {
       activePartner: "A",
     }));
   }, [config]);
+
+  const clearTimers = useCallback(() => {
+    if (speakingIntervalRef.current) clearInterval(speakingIntervalRef.current);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+  }, []);
 
   const startSpeaking = useCallback(() => {
     wordIndexRef.current = 0;
@@ -101,21 +107,22 @@ export function useSessionState(config: TherapyConfig) {
       setState((s) => {
         const word = MOCK_WORDS[wordIndexRef.current % MOCK_WORDS.length];
         wordIndexRef.current++;
-        const key = s.activePartner === "A" ? "transcriptA" : "transcriptB";
-        const currentText = s[key as keyof SessionData] as string;
+        // For open_mic_stream, both partners share transcript — write to A
+        const currentType = config.states[s.currentStateKey]?.type;
+        const key = currentType === "open_mic_stream" ? "transcriptA" : (s.activePartner === "A" ? "transcriptA" : "transcriptB");
+        const currentText = s[key] as string;
         return {
           ...s,
           [key]: currentText + (currentText ? " " : "") + word,
         };
       });
     }, 300);
-  }, [getMaxRecordingTime]);
+  }, [getMaxRecordingTime, config]);
 
   const stopSpeaking = useCallback(() => {
-    if (speakingIntervalRef.current) clearInterval(speakingIntervalRef.current);
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    clearTimers();
     setState((s) => ({ ...s, isSpeaking: false }));
-  }, []);
+  }, [clearTimers]);
 
   const advanceState = useCallback(() => {
     setState((s) => {
@@ -130,7 +137,6 @@ export function useSessionState(config: TherapyConfig) {
       const nextTherapyState = config.states[nextKey];
       if (!nextTherapyState) return s;
 
-      // Role reversal: swap active partner and restart cycle
       if (currentTherapyState.type === "role_reversal") {
         return {
           ...s,
@@ -146,9 +152,6 @@ export function useSessionState(config: TherapyConfig) {
         };
       }
 
-      // For RECEIVER states, the active partner is the opposite of the current sender
-      const isReceiverTurn = nextTherapyState.active_role === "RECEIVER";
-
       return {
         ...s,
         currentStateKey: nextKey,
@@ -159,10 +162,35 @@ export function useSessionState(config: TherapyConfig) {
     });
   }, [config]);
 
+  /** Trigger an AI intervention (for Open Mediation) */
+  const triggerIntervention = useCallback((tripwireId: string) => {
+    clearTimers();
+    setState((s) => ({
+      ...s,
+      currentStateKey: "state_ai_intervention",
+      micLock: true,
+      isSpeaking: false,
+      activeTripwire: tripwireId,
+    }));
+  }, [clearTimers]);
+
+  /** Complete the AI intervention and return to open floor */
+  const completeIntervention = useCallback(() => {
+    const interventionState = config.states["state_ai_intervention"];
+    const nextKey = interventionState?.transitions?.on_intervention_complete ?? "state_open_floor";
+    setState((s) => ({
+      ...s,
+      currentStateKey: nextKey,
+      micLock: false,
+      activeTripwire: null,
+      transcriptA: "",
+      transcriptB: "",
+    }));
+  }, [config]);
+
   const triggerStrike = useCallback(() => {
     setState((s) => {
       const newCount = s.strikeCount + 1;
-      // Find the first sender state for hard cut reset
       const senderKey = Object.keys(config.states).find(
         (k) => config.states[k].active_role === "SENDER"
       ) ?? s.currentStateKey;
@@ -208,5 +236,7 @@ export function useSessionState(config: TherapyConfig) {
     advanceState,
     triggerStrike,
     selectEmotion,
+    triggerIntervention,
+    completeIntervention,
   };
 }
