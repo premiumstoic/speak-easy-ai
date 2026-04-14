@@ -225,3 +225,8 @@
   0%, 100% { height: 8px; }
   50% { height: 100%; }
 }
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(77, 101, 77, 0.3), 0 0 80px rgba(77, 101, 77, 0.15); }
+  50% { box-shadow: 0 0 60px rgba(77, 101, 77, 0.45), 0 0 120px rgba(77, 101, 77, 0.25); }
+}
