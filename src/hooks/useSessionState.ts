@@ -74,12 +74,11 @@ export function useSessionState(config: TherapyConfig) {
   }, [config]);
 
   const clearTimers = useCallback(() => {
-    if (speakingIntervalRef.current) clearInterval(speakingIntervalRef.current);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
   }, []);
 
   const startSpeaking = useCallback(() => {
-    wordIndexRef.current = 0;
+    setState((s) => ({ ...s, isSpeaking: true, speakingTimer: 0 }));
     setState((s) => ({ ...s, isSpeaking: true, speakingTimer: 0 }));
 
     timerIntervalRef.current = setInterval(() => {
