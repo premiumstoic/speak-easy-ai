@@ -75,37 +75,26 @@ const Journey = () => {
         </section>
 
         {/* Timeline */}
-        <div className="relative">
-          {/* Continuous line */}
-          <div
-            className="absolute left-6 md:left-8 top-0 bottom-0 w-0.5 opacity-30"
-            style={{ background: "linear-gradient(to bottom, hsl(var(--primary-container)) 0%, hsl(var(--tertiary-container)) 50%, hsl(var(--primary-container)) 100%)" }}
-          />
-
+        <div className="space-y-6">
           {timelineItems.map((item, i) => (
-            <div key={i} className="relative flex gap-8 md:gap-12 mb-20 group" style={{ animation: `float-in 0.6s cubic-bezier(0.2,0.8,0.2,1) ${0.2 + i * 0.15}s both` }}>
-              {/* Node */}
-              <div className="relative z-10">
-                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full ${item.iconBg} flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110`}>
-                  <item.icon className={`w-6 h-6 md:w-7 md:h-7 ${item.iconColor}`} />
-                </div>
-              </div>
-
+            <div key={i} className="group" style={{ animation: `float-in 0.6s cubic-bezier(0.2,0.8,0.2,1) ${0.2 + i * 0.15}s both` }}>
               {/* Card */}
-              <div className="flex-1 pt-2">
-                <div className={`${item.cardBg} rounded-xl p-8`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      {item.badge && (
-                        <span className={`text-[10px] font-bold tracking-widest uppercase ${item.badgeBg} px-3 py-1 rounded-full`}>
-                          {item.badge}
-                        </span>
-                      )}
-                      <h2 className="font-headline text-2xl font-bold mt-3">{item.title}</h2>
-                    </div>
-                    <time className="text-sm font-medium text-on-surface-variant">{item.date}</time>
+              <div className={`${item.cardBg} rounded-xl p-6`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-full ${item.iconBg} flex items-center justify-center shrink-0`}>
+                    <item.icon className={`w-5 h-5 ${item.iconColor}`} />
                   </div>
-                  <p className="text-on-surface-variant leading-relaxed mb-6">{item.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-headline text-lg font-bold truncate">{item.title}</h2>
+                    <time className="text-xs font-medium text-on-surface-variant">{item.date}</time>
+                  </div>
+                  {item.badge && (
+                    <span className={`text-[10px] font-bold tracking-widest uppercase ${item.badgeBg} px-2.5 py-1 rounded-full shrink-0`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="text-on-surface-variant text-sm leading-relaxed mb-4">{item.description}</p>
                   <div className="flex flex-wrap gap-2">
                     {item.tags.map((tag, j) => (
                       <span key={j} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full ${tag.bg} text-sm font-medium`}>
@@ -114,13 +103,12 @@ const Journey = () => {
                       </span>
                     ))}
                   </div>
-                </div>
               </div>
             </div>
           ))}
 
           {/* AI Insight */}
-          <div className="relative mb-20 ml-6 md:ml-28" style={{ animation: "float-in 0.6s cubic-bezier(0.2,0.8,0.2,1) 0.8s both" }}>
+          <div style={{ animation: "float-in 0.6s cubic-bezier(0.2,0.8,0.2,1) 0.8s both" }}>
             <div className="reflection-glass rounded-xl p-8 shadow-sm relative overflow-hidden">
               <div className="absolute -right-4 -top-4 opacity-10">
                 <Sparkles className="w-24 h-24" />
