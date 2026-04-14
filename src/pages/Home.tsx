@@ -79,11 +79,19 @@ const Home = () => {
   return (
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="pt-4 pb-2 px-6 flex items-center shrink-0">
+      <header className="pt-4 pb-2 px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <UmayLogo className="w-6 h-6 text-primary" />
           <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
         </div>
+        <button
+          onClick={simulateInserts}
+          disabled={simulating}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-tertiary/10 text-tertiary text-xs font-body font-medium hover:bg-tertiary/20 transition-colors disabled:opacity-50"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          {simulating ? "Streaming…" : "Simulate"}
+        </button>
       </header>
 
       {/* Center: Start Session */}
