@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-dim": "#821a01",
+                    "inverse-primary": "#e2fedf",
+                    "surface-container-high": "#eae8e2",
+                    "inverse-on-surface": "#9e9d99",
+                    "on-secondary-fixed-variant": "#625671",
+                    "background": "#fcf9f5",
+                    "on-secondary": "#fef6ff",
+                    "inverse-surface": "#0e0e0c",
+                    "on-primary-fixed": "#2e452f",
+                    "tertiary-dim": "#704b23",
+                    "secondary": "#665a75",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#f0eee8",
+                    "on-tertiary-fixed": "#331b00",
+                    "secondary-fixed": "#ecdcfd",
+                    "surface-tint": "#4d654d",
+                    "on-error-container": "#671200",
+                    "primary-fixed": "#cfeacc",
+                    "outline": "#7b7b76",
+                    "on-primary-fixed-variant": "#4a614a",
+                    "on-error": "#fff7f6",
+                    "surface-variant": "#e4e2dc",
+                    "on-background": "#32332f",
+                    "on-secondary-container": "#584d67",
+                    "surface-container-low": "#f6f3ef",
+                    "on-primary": "#e9ffe5",
+                    "surface": "#fcf9f5",
+                    "tertiary-fixed-dim": "#d3a272",
+                    "secondary-container": "#ecdcfd",
+                    "primary-dim": "#415942",
+                    "on-tertiary": "#fff7f4",
+                    "secondary-dim": "#5a4e69",
+                    "tertiary-fixed": "#e1af7e",
+                    "primary": "#4d654d",
+                    "error-container": "#fa7150",
+                    "surface-bright": "#fcf9f5",
+                    "surface-container-highest": "#e4e2dc",
+                    "on-tertiary-fixed-variant": "#5a3811",
+                    "surface-dim": "#dcdad3",
+                    "secondary-fixed-dim": "#deceee",
+                    "on-surface": "#32332f",
+                    "tertiary-container": "#e1af7e",
+                    "on-tertiary-container": "#502f09",
+                    "on-primary-container": "#405741",
+                    "error": "#aa371c",
+                    "outline-variant": "#b3b2ac",
+                    "tertiary": "#7e572e",
+                    "primary-fixed-dim": "#c1dcbe",
+                    "primary-container": "#cfeacc",
+                    "on-secondary-fixed": "#453b54",
+                    "on-surface-variant": "#5f5f5b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-overlay {
+            background: rgba(252, 249, 245, 0.7);
+            backdrop-filter: blur(24px);
+        }
+        .mic-glow {
+            box-shadow: 0 0 40px rgba(77, 101, 77, 0.15);
+        }
+        .reflection-glass {
+            background: rgba(236, 220, 253, 0.4);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface overflow-hidden h-screen w-screen selection:bg-primary-container">
+<!-- Top AppBar (Simplified for Focus Session) -->
+<header class="fixed top-0 left-0 right-0 z-[60] pt-6 px-8 flex justify-between items-center pointer-events-none">
+<div class="flex items-center gap-3 pointer-events-auto">
+<span class="material-symbols-outlined text-primary text-2xl">spa</span>
+<h1 class="font-headline text-lg font-bold italic tracking-tight text-primary">Sanctuary</h1>
+</div>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-variant transition-colors pointer-events-auto shadow-sm">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</header>
+<!-- Main Session Canvas -->
+<main class="flex flex-col h-full w-full">
+<!-- Partner A Section (Active State Example) -->
+<section class="relative flex-1 flex flex-col items-center justify-center bg-surface transition-all duration-700">
+<div class="absolute inset-0 bg-primary/5 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col items-center gap-6">
+<!-- User Identity Card -->
+<div class="flex flex-col items-center">
+<div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-primary to-primary-container mic-glow">
+<img alt="Portrait of Partner A" class="w-full h-full rounded-full object-cover" data-alt="Close up portrait of a calm woman with soft lighting and natural background for a wellness app" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYHkqqdsS_9I6jfXTt4CERKDAn8JCjIjSD_MoWLVZKFt5aomCgds94CdqE1yrfXH7OwuqIh_AOfe-ifeM89oAt6qXCjzt_fYoYc-WIEmdfAMNqXTDA4_5XZAazpwAtFx3q_Wcsbq2A-c9h3mDMuahXFzbxR39PUndcvSayeEN0xE_QCzgXksozNVQ0UGJdl6nZqEpbyPgamQSEsp7jUrfu9c_4oUobCDzCbZAmpwsUnd1evDZSnU7GeUZARBuWR3B4zjiorh42vlum"/>
+</div>
+<div class="mt-4 text-center">
+<span class="font-label text-xs uppercase tracking-widest text-primary font-bold">Speaking</span>
+<h2 class="font-headline text-2xl font-semibold text-on-surface">Alex</h2>
+</div>
+</div>
+<!-- Push to Talk UI -->
+<button class="group flex flex-col items-center gap-4 transition-transform active:scale-95">
+<div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all">
+<span class="material-symbols-outlined text-on-primary text-3xl" data-weight="fill">mic</span>
+</div>
+<p class="font-label text-sm text-on-surface-variant opacity-60">Tap to Pause</p>
+</button>
+</div>
+<!-- Subtle Pulse Visualization -->
+<div class="absolute bottom-12 w-full flex justify-center gap-1 opacity-20">
+<div class="w-1 h-8 bg-primary rounded-full animate-pulse"></div>
+<div class="w-1 h-12 bg-primary rounded-full animate-pulse [animation-delay:0.2s]"></div>
+<div class="w-1 h-16 bg-primary rounded-full animate-pulse [animation-delay:0.4s]"></div>
+<div class="w-1 h-12 bg-primary rounded-full animate-pulse [animation-delay:0.6s]"></div>
+<div class="w-1 h-8 bg-primary rounded-full animate-pulse [animation-delay:0.8s]"></div>
+</div>
+</section>
+<!-- AI Center Divider & Prompter -->
+<div class="relative z-50 h-0 flex items-center justify-center">
+<div class="reflection-glass px-8 py-6 rounded-xl max-w-lg mx-6 text-center shadow-2xl border border-white/20">
+<p class="text-on-secondary-container font-headline text-lg leading-relaxed font-medium">
+                    "Alex, how does it feel when Jordan expresses that need? Take a deep breath before answering."
+                </p>
+<div class="mt-3 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-bold text-secondary-dim">AI Reflection Guide</span>
+</div>
+</div>
+</div>
+<!-- Partner B Section (Dimmed/Inactive State Example) -->
+<section class="relative flex-1 flex flex-col items-center justify-center bg-surface-container-low transition-all duration-700">
+<div class="relative z-10 flex flex-col items-center gap-6 opacity-40 grayscale-[0.2]">
+<!-- User Identity Card -->
+<div class="flex flex-col items-center">
+<div class="w-20 h-20 rounded-full p-0.5 bg-outline-variant/30">
+<img alt="Portrait of Partner B" class="w-full h-full rounded-full object-cover" data-alt="Portrait of a young man with a peaceful expression in soft daylight for a therapy session interface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCw8GMOerwD30MUWDz9tdd9YqOA1XN88N52EOQSpTeRL20SEIvnJOK_AOyFMAfaGKjqi-8cvAkYMPhSKcUfyT3u20jiDu7frB9wYve13F9RpVV_lXPmEWgFbeMy69-3O9jhmCHzVAccl8GapMnsYa4Z3ooZEB4yShQDKmtsD3ZVddqMkaCZ4T98Nxjytz0hKkW9Iv4WmyFHLrOWvGgZx15NvTsjjfIWBmh1gimIJjWE5ECmwym-rCvBW0YblO8yMmDj8XY4c2SSxkD3"/>
+</div>
+<div class="mt-4 text-center">
+<span class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Listening</span>
+<h2 class="font-headline text-xl font-medium text-on-surface">Jordan</h2>
+</div>
+</div>
+<!-- Push to Talk UI (Inactive) -->
+<button class="group flex flex-col items-center gap-4 cursor-not-allowed">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl">mic_off</span>
+</div>
+<p class="font-label text-xs text-on-surface-variant">Waiting for turn</p>
+</button>
+</div>
+</section>
+</main>
+<!-- Side Decoration (Asymmetrical Editorial Touch) -->
+<div class="fixed left-4 top-1/2 -translate-y-1/2 flex flex-col gap-12 z-40 opacity-10 pointer-events-none">
+<div class="w-[2px] h-32 bg-primary"></div>
+<span class="rotate-90 origin-left whitespace-nowrap font-label text-[10px] tracking-[0.4em] uppercase text-on-surface">Reflection Mode 02</span>
+</div>
+<!-- Decorative Gradient Background Blur -->
+<div class="fixed -bottom-[20%] -left-[10%] w-[50%] h-[50%] bg-tertiary-container/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+<div class="fixed -top-[20%] -right-[10%] w-[50%] h-[50%] bg-primary-container/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+</body></html>

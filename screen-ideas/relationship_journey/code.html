@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-dim": "#821a01",
+                    "inverse-primary": "#e2fedf",
+                    "surface-container-high": "#eae8e2",
+                    "inverse-on-surface": "#9e9d99",
+                    "on-secondary-fixed-variant": "#625671",
+                    "background": "#fcf9f5",
+                    "on-secondary": "#fef6ff",
+                    "inverse-surface": "#0e0e0c",
+                    "on-primary-fixed": "#2e452f",
+                    "tertiary-dim": "#704b23",
+                    "secondary": "#665a75",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#f0eee8",
+                    "on-tertiary-fixed": "#331b00",
+                    "secondary-fixed": "#ecdcfd",
+                    "surface-tint": "#4d654d",
+                    "on-error-container": "#671200",
+                    "primary-fixed": "#cfeacc",
+                    "outline": "#7b7b76",
+                    "on-primary-fixed-variant": "#4a614a",
+                    "on-error": "#fff7f6",
+                    "surface-variant": "#e4e2dc",
+                    "on-background": "#32332f",
+                    "on-secondary-container": "#584d67",
+                    "surface-container-low": "#f6f3ef",
+                    "on-primary": "#e9ffe5",
+                    "surface": "#fcf9f5",
+                    "tertiary-fixed-dim": "#d3a272",
+                    "secondary-container": "#ecdcfd",
+                    "primary-dim": "#415942",
+                    "on-tertiary": "#fff7f4",
+                    "secondary-dim": "#5a4e69",
+                    "tertiary-fixed": "#e1af7e",
+                    "primary": "#4d654d",
+                    "error-container": "#fa7150",
+                    "surface-bright": "#fcf9f5",
+                    "surface-container-highest": "#e4e2dc",
+                    "on-tertiary-fixed-variant": "#5a3811",
+                    "surface-dim": "#dcdad3",
+                    "secondary-fixed-dim": "#deceee",
+                    "on-surface": "#32332f",
+                    "tertiary-container": "#e1af7e",
+                    "on-tertiary-container": "#502f09",
+                    "on-primary-container": "#405741",
+                    "error": "#aa371c",
+                    "outline-variant": "#b3b2ac",
+                    "tertiary": "#7e572e",
+                    "primary-fixed-dim": "#c1dcbe",
+                    "primary-container": "#cfeacc",
+                    "on-secondary-fixed": "#453b54",
+                    "on-surface-variant": "#5f5f5b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fcf9f5;
+        }
+        h1, h2, h3 {
+            font-family: 'Manrope', sans-serif;
+        }
+        .timeline-line {
+            background: linear-gradient(to bottom, #cfeacc 0%, #e1af7e 50%, #cfeacc 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-8 max-w-screen-xl mx-auto docked full-width top-0 pt-4 bg-transparent">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-800 dark:text-emerald-200">spa</span>
+<span class="text-emerald-900 dark:text-emerald-50 font-bold italic font-manrope text-lg tracking-tight">Sanctuary</span>
+</div>
+<div class="h-10 w-10 rounded-full overflow-hidden bg-surface-container-high ring-2 ring-surface-container-low">
+<img alt="User profile" data-alt="Close up portrait of a calm woman with soft lighting and neutral background, editorial style photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwa2O8JNLIPsA896OF1RmOMdLVjzU0godmIRR90QM50GGysqUuZoyFU4LOmpRK6C-vXjP3YEabc5WdzXvoohUBUKj2Yo7EoNFtV7EHOzhBI5B7M0lEK4J_VwJ7j4pbLNX1Oyg16mPcFtfa3hOsT92GQqi267DjC6HhwAqKTg54mE0UuJcJDL0ZwHXPKe74mTKD-ZDT8zyDazyNxyOCH6sX0q4R67X3zrSi07lK_qc-IamW6mgUdqvI6FOO2Ond9Zj9CrjhZa-iEli9"/>
+</div>
+</header>
+<main class="max-w-screen-md mx-auto px-6 mt-12">
+<!-- Hero Section -->
+<section class="mb-16 ml-4 md:ml-12">
+<h1 class="text-5xl md:text-6xl font-extrabold tracking-tighter text-primary mb-4 leading-tight">
+                Your Shared <br/><span class="text-tertiary">Journey</span>
+</h1>
+<p class="text-on-surface-variant text-lg max-w-md leading-relaxed">
+                Tracing the path of your connection. Each node represents a moment of growth and intentional reflection.
+            </p>
+</section>
+<!-- Timeline Container -->
+<div class="relative">
+<!-- Continuous Timeline Line -->
+<div class="absolute left-6 md:left-8 top-0 bottom-0 w-0.5 timeline-line opacity-30"></div>
+<!-- Timeline Item 1 -->
+<div class="relative flex gap-8 md:gap-12 mb-20 group">
+<!-- Node Marker -->
+<div class="relative z-10">
+<div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary-container flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110">
+<span class="material-symbols-outlined text-primary text-3xl">map</span>
+</div>
+</div>
+<!-- Content Card -->
+<div class="flex-1 pt-2">
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_20px_40px_rgba(77,101,77,0.06)] border-none">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="text-xs font-bold tracking-widest text-tertiary uppercase bg-tertiary-container/20 px-3 py-1 rounded-full">Recent Session</span>
+<h2 class="text-2xl font-bold text-on-surface mt-3">Imago Dialogue</h2>
+</div>
+<time class="text-sm font-medium text-on-surface-variant">Oct 24, 10:30 AM</time>
+</div>
+<p class="text-on-surface-variant leading-relaxed mb-6">
+                            Practiced the three steps of Mirroring, Validation, and Empathy to address communication gaps regarding household responsibilities.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-container/40 text-on-primary-container text-sm font-medium">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                                You felt: Heard
+                            </span>
+<span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-secondary-container/40 text-on-secondary-container text-sm font-medium">
+<span class="material-symbols-outlined text-sm">psychology</span>
+                                Insight: Patience
+                            </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative flex gap-8 md:gap-12 mb-20 group">
+<!-- Node Marker -->
+<div class="relative z-10">
+<div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-tertiary-container flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110">
+<span class="material-symbols-outlined text-tertiary text-3xl">self_improvement</span>
+</div>
+</div>
+<!-- Content Card -->
+<div class="flex-1 pt-2">
+<div class="bg-surface-container-low rounded-xl p-8 border-none">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="text-xs font-bold tracking-widest text-on-primary-fixed-variant uppercase bg-primary-fixed/30 px-3 py-1 rounded-full">Milestone</span>
+<h2 class="text-2xl font-bold text-on-surface mt-3">The Vulnerability Wall</h2>
+</div>
+<time class="text-sm font-medium text-on-surface-variant">Oct 17, 04:00 PM</time>
+</div>
+<p class="text-on-surface-variant leading-relaxed mb-6">
+                            A deep dive into past attachment styles. Both partners identified core fears and shared them without judgment.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-tertiary-container/30 text-on-tertiary-container text-sm font-medium">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">sunny</span>
+                                You felt: Safe
+                            </span>
+<span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-highest text-on-surface-variant text-sm font-medium">
+<span class="material-symbols-outlined text-sm">history</span>
+                                Pattern: Avoidance
+                            </span>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Insight Breakout (Reflection Glass) -->
+<div class="relative mb-20 ml-6 md:ml-28">
+<div class="bg-secondary-container/40 backdrop-blur-xl rounded-xl p-8 border-none shadow-sm relative overflow-hidden">
+<div class="absolute -right-4 -top-4 opacity-10">
+<span class="material-symbols-outlined text-9xl">auto_awesome</span>
+</div>
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-secondary">auto_awesome</span>
+<h3 class="text-secondary font-bold tracking-tight">Reflection Insight</h3>
+</div>
+<p class="text-on-secondary-container italic text-lg leading-relaxed">
+                        "Your sessions show a 30% increase in 'Active Listening' tags over the last month. You are building a sanctuary of mutual understanding."
+                    </p>
+</div>
+</div>
+<!-- Timeline Item 3 -->
+<div class="relative flex gap-8 md:gap-12 mb-20 group">
+<!-- Node Marker -->
+<div class="relative z-10">
+<div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary-dim flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110">
+<span class="material-symbols-outlined text-primary-fixed text-3xl">forum</span>
+</div>
+</div>
+<!-- Content Card -->
+<div class="flex-1 pt-2">
+<div class="bg-surface-container-low rounded-xl p-8 border-none opacity-80">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h2 class="text-2xl font-bold text-on-surface mt-3">Initial Assessment</h2>
+</div>
+<time class="text-sm font-medium text-on-surface-variant">Oct 10, 02:00 PM</time>
+</div>
+<p class="text-on-surface-variant leading-relaxed mb-6">
+                            The starting point. Identifying goals for the next 12 weeks and establishing the ground rules for healthy conflict resolution.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-highest text-on-surface-variant text-sm font-medium">
+<span class="material-symbols-outlined text-sm">anchor</span>
+                                You felt: Hopeful
+                            </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- End of Journey Prompt -->
+<div class="mt-12 text-center py-12 border-t border-dashed border-outline-variant/20">
+<span class="material-symbols-outlined text-tertiary text-4xl mb-4">eco</span>
+<h3 class="text-xl font-bold text-on-surface">Continue the growth</h3>
+<p class="text-on-surface-variant mt-2 mb-8">Your next milestone is scheduled for Friday.</p>
+<button class="bg-primary text-on-primary rounded-full px-8 py-4 font-semibold shadow-lg hover:opacity-90 transition-all flex items-center gap-2 mx-auto">
+                Prepare for next session
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center">
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full px-6 py-3 bg-stone-50/70 dark:bg-stone-900/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(77,101,77,0.06)] flex justify-around items-center font-manrope tracking-tight">
+<!-- Active Navigation: Map (Journey/Timeline) -->
+<button class="bg-emerald-100 dark:bg-emerald-800/40 text-emerald-900 dark:text-emerald-50 rounded-full p-4 scale-110 shadow-lg transition-all duration-300 active:scale-95 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+</button>
+<button class="text-stone-500 dark:text-stone-400 p-4 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-300 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">mic</span>
+</button>
+<button class="text-stone-500 dark:text-stone-400 p-4 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-300 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</nav>
+</body></html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "error-dim": "#821a01",
+                  "inverse-primary": "#e2fedf",
+                  "surface-container-high": "#eae8e2",
+                  "inverse-on-surface": "#9e9d99",
+                  "on-secondary-fixed-variant": "#625671",
+                  "background": "#fcf9f5",
+                  "on-secondary": "#fef6ff",
+                  "inverse-surface": "#0e0e0c",
+                  "on-primary-fixed": "#2e452f",
+                  "tertiary-dim": "#704b23",
+                  "secondary": "#665a75",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-container": "#f0eee8",
+                  "on-tertiary-fixed": "#331b00",
+                  "secondary-fixed": "#ecdcfd",
+                  "surface-tint": "#4d654d",
+                  "on-error-container": "#671200",
+                  "primary-fixed": "#cfeacc",
+                  "outline": "#7b7b76",
+                  "on-primary-fixed-variant": "#4a614a",
+                  "on-error": "#fff7f6",
+                  "surface-variant": "#e4e2dc",
+                  "on-background": "#32332f",
+                  "on-secondary-container": "#584d67",
+                  "surface-container-low": "#f6f3ef",
+                  "on-primary": "#e9ffe5",
+                  "surface": "#fcf9f5",
+                  "tertiary-fixed-dim": "#d3a272",
+                  "secondary-container": "#ecdcfd",
+                  "primary-dim": "#415942",
+                  "on-tertiary": "#fff7f4",
+                  "secondary-dim": "#5a4e69",
+                  "tertiary-fixed": "#e1af7e",
+                  "primary": "#4d654d",
+                  "error-container": "#fa7150",
+                  "surface-bright": "#fcf9f5",
+                  "surface-container-highest": "#e4e2dc",
+                  "on-tertiary-fixed-variant": "#5a3811",
+                  "surface-dim": "#dcdad3",
+                  "secondary-fixed-dim": "#deceee",
+                  "on-surface": "#32332f",
+                  "tertiary-container": "#e1af7e",
+                  "on-tertiary-container": "#502f09",
+                  "on-primary-container": "#405741",
+                  "error": "#aa371c",
+                  "outline-variant": "#b3b2ac",
+                  "tertiary": "#7e572e",
+                  "primary-fixed-dim": "#c1dcbe",
+                  "primary-container": "#cfeacc",
+                  "on-secondary-fixed": "#453b54",
+                  "on-surface-variant": "#5f5f5b"
+          },
+          "borderRadius": {
+                  "DEFAULT": "1rem",
+                  "lg": "2rem",
+                  "xl": "3rem",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Manrope"],
+                  "body": ["Inter"],
+                  "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, .headline { font-family: 'Manrope', sans-serif; }
+    .glass-nav { backdrop-filter: blur(24px); }
+    .reflection-glass {
+      background: rgba(236, 220, 253, 0.4);
+      backdrop-filter: blur(24px);
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container min-h-screen">
+<header class="fixed top-0 left-0 right-0 z-50 pt-4 bg-surface/30 backdrop-blur-md">
+<div class="flex justify-between items-center w-full px-8 max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-emerald-800 dark:text-emerald-200" style="font-variation-settings: 'FILL' 1;">spa</span>
+<span class="text-emerald-900 dark:text-emerald-50 font-bold italic text-lg tracking-tight">Sanctuary</span>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a serene woman with a soft smile in gentle natural morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAk_GPwwa1imaPxpZ_446VlcOWi-_UNYU7My_11Zb7nsU_mZ87MpJI_EqRy_Jo3SJpsnryKs0XdFFCWm1hpQD0U4HRw14ZZSu72-BMe6ppsFnbbvRc08C7y8x0dW1a5FCQZVhebB1ZXjPdtbKfoCTJZm5TnkjVqrt3UNWiIU9CKHC_lw70x14OQ4lYmA70Vc3RdVUIoWAIcecVpyN5nsFpYU69E8NVjrKnZeJzCabif4lGWnC6tRzPAOL-hkRm0r-_6zi7-seJ5EV_"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-screen-xl mx-auto">
+<section class="mt-12 text-center">
+<div class="mb-6 opacity-60 font-medium tracking-wide text-sm uppercase">Welcome back, Sarah &amp; Tom</div>
+<h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-on-surface mb-12 max-w-3xl mx-auto leading-[1.1]">
+        How is your heart <br/><span class="text-primary italic">today?</span>
+</h1>
+<div class="relative group cursor-pointer inline-block">
+<div class="absolute inset-0 bg-primary opacity-10 blur-3xl rounded-full group-hover:opacity-20 transition-opacity duration-700"></div>
+<button class="relative bg-gradient-to-br from-primary to-primary-dim text-on-primary px-12 py-8 rounded-full flex flex-col items-center gap-2 shadow-xl hover:scale-[1.02] transition-all duration-500 active:scale-95 group">
+<span class="material-symbols-outlined text-4xl mb-1" style="font-variation-settings: 'FILL' 1;">mic</span>
+<span class="font-headline text-xl font-bold tracking-tight">Start Session</span>
+<span class="text-on-primary/70 text-xs font-medium">15 min reflection</span>
+</button>
+</div>
+</section>
+<section class="mt-24">
+<div class="flex items-end justify-between mb-8 px-2">
+<div>
+<h2 class="text-2xl font-bold tracking-tight mb-1">Insights Feed</h2>
+<p class="text-on-surface-variant text-sm">Gentle nudges for your connection</p>
+</div>
+<button class="text-primary font-semibold text-sm hover:underline">View History</button>
+</div>
+<div class="flex gap-6 overflow-x-auto no-scrollbar pb-8 -mx-6 px-6 snap-x">
+<div class="snap-center shrink-0 w-[320px] bg-surface-container-low rounded-xl p-8 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-6 text-primary">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="text-xs font-bold uppercase tracking-widest">Notification</span>
+</div>
+<p class="text-lg font-medium leading-relaxed mb-4">Tom completed his daily gratitude reflection. He mentioned your support during dinner.</p>
+</div>
+<button class="w-full py-4 bg-surface-container-lowest text-on-surface font-semibold rounded-full hover:bg-white transition-colors">Acknowledge</button>
+</div>
+<div class="snap-center shrink-0 w-[320px] reflection-glass rounded-xl p-8 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-6 text-on-secondary-container">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="text-xs font-bold uppercase tracking-widest">Deep Question</span>
+</div>
+<p class="text-lg font-medium leading-relaxed mb-6">What is one thing your partner did this week that made you feel safe?</p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-3 bg-on-secondary-container text-white text-sm font-semibold rounded-full">Answer</button>
+<button class="px-4 py-3 bg-white/20 text-on-secondary-container text-sm font-semibold rounded-full"><span class="material-symbols-outlined">forward</span></button>
+</div>
+</div>
+<div class="snap-center shrink-0 w-[320px] bg-tertiary-container/20 rounded-xl p-8 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-6 text-tertiary">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="text-xs font-bold uppercase tracking-widest">Reminder</span>
+</div>
+<p class="text-lg font-medium leading-relaxed mb-4">Your "No-Screen Night" is scheduled for tonight at 8:00 PM.</p>
+</div>
+<div class="bg-white/40 p-4 rounded-lg">
+<div class="flex justify-between items-center text-xs font-bold text-tertiary-dim">
+<span>PREPARATION</span>
+<span>80%</span>
+</div>
+<div class="w-full h-1.5 bg-tertiary/10 rounded-full mt-2 overflow-hidden">
+<div class="w-[80%] h-full bg-tertiary rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="bg-surface-container-low rounded-xl p-10 flex flex-col md:flex-row items-center gap-8">
+<div class="w-32 h-32 shrink-0 rounded-full bg-emerald-100 overflow-hidden">
+<img alt="Collaboration" class="w-full h-full object-cover" data-alt="Two sets of hands gently resting together on a rustic wooden table with soft focus morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmLViYl57dlA8SPrhBbadgDfA1xQFiXCd1PbE4yKE5KkgKNNH6tXL08OUMoYEF3E692CzAi5fx6leAokt92UW1xhV1RvjuuhPB7wFh4iRg4Vtl0K8eroRawPTPyM_8OKgdh0xM58bTo4s9UuuRdmllT6V-PD86PBOFkNySzlAqWcy7-298Wxs5Gs-4TIlmazw_vf6RorxY-uJnetYB4cFMhzW9EDLg648Lx4EcxfrCPS442WNwiwvw9ba02rvZsV0kq-Wl1LRX9x28"/>
+</div>
+<div>
+<h3 class="text-2xl font-bold mb-2">Relationship Pulse</h3>
+<p class="text-on-surface-variant leading-relaxed mb-6">Your emotional harmony is trending upward this week. You both are communicating 15% more effectively.</p>
+<div class="inline-flex items-center gap-2 py-2 px-4 bg-primary-container text-on-primary-container rounded-full text-sm font-bold">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+            Excellent
+          </div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-10 border border-outline-variant/10">
+<h3 class="text-xl font-bold mb-6">Today's Focus</h3>
+<ul class="space-y-6">
+<li class="flex items-start gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-primary mt-1 flex items-center justify-center">
+<div class="w-3 h-3 bg-primary rounded-full"></div>
+</div>
+<div>
+<div class="font-bold">Active Listening Exercise</div>
+<div class="text-sm text-on-surface-variant">Repeat what you heard before responding</div>
+</div>
+</li>
+<li class="flex items-start gap-4 opacity-50">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant mt-1"></div>
+<div>
+<div class="font-bold">Express Gratitude</div>
+<div class="text-sm text-on-surface-variant">Tell Tom one thing you appreciate</div>
+</div>
+</li>
+</ul>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center">
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full px-6 py-3 bg-stone-50/70 dark:bg-stone-900/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(77,101,77,0.06)] flex justify-around items-center">
+<a class="bg-emerald-100 dark:bg-emerald-800/40 text-emerald-900 dark:text-emerald-50 rounded-full p-4 scale-110 shadow-lg transition-all duration-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+</a>
+<a class="text-stone-500 dark:text-stone-400 p-4 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-300 rounded-full" href="#">
+<span class="material-symbols-outlined">mic</span>
+</a>
+<a class="text-stone-500 dark:text-stone-400 p-4 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-300 rounded-full" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</div>
+</nav>
+</body></html>
