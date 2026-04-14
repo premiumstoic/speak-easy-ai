@@ -9,13 +9,10 @@ const Home = () => {
   return (
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="pt-4 pb-2 px-6 flex justify-between items-center shrink-0">
+      <header className="pt-4 pb-2 px-6 flex items-center shrink-0">
         <div className="flex items-center gap-2">
           <UmayLogo className="w-6 h-6 text-primary" />
           <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
-        </div>
-        <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-muted-foreground font-body font-semibold text-sm">
-          S
         </div>
       </header>
 
@@ -32,11 +29,11 @@ const Home = () => {
 
           {/* Button */}
           <button
-            className="relative w-36 h-36 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground flex flex-col items-center justify-center gap-1.5 soft-shadow-lg hover:scale-[1.03] active:scale-95 transition-all duration-200 ease-out session-glow"
+            className="relative w-44 h-44 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground flex flex-col items-center justify-center gap-2 soft-shadow-lg hover:scale-[1.03] active:scale-95 transition-all duration-200 ease-out session-glow"
           >
-            <Mic className="w-10 h-10 mb-1" />
-            <span className="font-body text-base font-semibold tracking-tight">Start Session</span>
-            <span className="text-primary-foreground/60 text-[10px] font-medium">15 min reflection</span>
+            <Mic className="w-12 h-12 mb-1" />
+            <span className="font-body text-lg font-semibold tracking-tight">Start Session</span>
+            <span className="text-primary-foreground/60 text-xs font-medium">15 min reflection</span>
           </button>
         </div>
       </main>
