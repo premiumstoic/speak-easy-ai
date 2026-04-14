@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { Mic, Waves } from "lucide-react";
+import { Mic, Waves, Zap } from "lucide-react";
 import { InsightCard } from "@/components/InsightCard";
 import UmayLogo from "@/components/UmayLogo";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 const techniques = [
   {
@@ -22,17 +25,73 @@ const techniques = [
 const Home = () => {
   const navigate = useNavigate();
   const [selectedTechnique, setSelectedTechnique] = useState(techniques[0].id);
+  const [simulating, setSimulating] = useState(false);
 
   const selected = techniques.find((t) => t.id === selectedTechnique)!;
+
+  const DEMO_TURNS = [
+    { speaker: "Partner A", text: "I feel like when I come home and the house is messy, it makes me feel like my effort doesn't matter.", tripwire: null },
+    { speaker: "Partner B", text: "Well maybe if you actually helped more on weekends instead of playing video games, I wouldn't be so exhausted.", tripwire: null },
+    { speaker: "Partner A", text: "That's not fair. I do help. You just never notice what I do.", tripwire: null },
+    { speaker: "Partner B", text: "I notice. I notice that every Saturday you disappear into the garage for three hours.", tripwire: null },
+    { speaker: "Partner A", text: "I need that time. I feel like I can't breathe sometimes. Everything feels like pressure.", tripwire: "the_missed_drop" },
+    { speaker: "Partner B", text: "Oh, so now I'm the one suffocating you? That's rich.", tripwire: null },
+    { speaker: "Partner A", text: "That's not what I said. You always twist my words.", tripwire: "the_loop" },
+    { speaker: "Partner B", text: "...", tripwire: "the_stonewall" },
+    { speaker: "System", text: "I am noticing that things have gone quiet. Sometimes when emotion gets too intense, our systems shut down to protect us. Let us slow the pace down.", tripwire: "the_stonewall" },
+    { speaker: "Partner A", text: "I just want us to be a team again. I miss feeling like we're on the same side.", tripwire: "the_missed_drop" },
+  ];
+
+  const simulateInserts = useCallback(async () => {
+    setSimulating(true);
+    const sessionId = `demo_${Date.now()}`;
+    let count = 0;
+
+    for (const turn of DEMO_TURNS) {
+      const ai_analysis: Record<string, unknown> = {
+        turn_number: count + 1,
+        confidence_score: turn.tripwire ? 0.85 + Math.random() * 0.12 : Math.random() * 0.4,
+        detected_tripwire: turn.tripwire,
+        action_decision: turn.tripwire ? "interrupt" : "null",
+        chain_of_thought_scratchpad: turn.tripwire
+          ? `[ANALYSIS] Evaluating 20-turn context window... Semantic markers detected for "${turn.tripwire}". Cosine similarity: ${(0.7 + Math.random() * 0.25).toFixed(2)}. Affective trajectory: negative valence sustained. Confidence: ${(0.85 + Math.random() * 0.12).toFixed(2)} >= 0.85 threshold. ACTION: interrupt.`
+          : `[ANALYSIS] Turn ${count + 1} by ${turn.speaker}. No tripwire markers exceed threshold. Confidence: ${(Math.random() * 0.4).toFixed(2)}. ACTION: null. Maintaining silence.`,
+      };
+
+      await supabase.from("therapy_logs").insert([{
+        session_id: sessionId,
+        speaker: turn.speaker,
+        raw_transcript: turn.text,
+        ai_analysis: ai_analysis as unknown as Json,
+      }]);
+      count++;
+
+      // Stagger inserts by 1.5s so the Observer Dashboard gets a nice stream
+      if (count < DEMO_TURNS.length) {
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+
+    setSimulating(false);
+    toast.success(`Simulated ${count} turns`, { description: `Session: ${sessionId}` });
+  }, []);
 
   return (
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="pt-4 pb-2 px-6 flex items-center shrink-0">
+      <header className="pt-4 pb-2 px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <UmayLogo className="w-6 h-6 text-primary" />
           <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
         </div>
+        <button
+          onClick={simulateInserts}
+          disabled={simulating}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-tertiary/10 text-tertiary text-xs font-body font-medium hover:bg-tertiary/20 transition-colors disabled:opacity-50"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          {simulating ? "Streaming…" : "Simulate"}
+        </button>
       </header>
 
       {/* Center: Start Session */}
