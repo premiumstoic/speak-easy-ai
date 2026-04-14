@@ -90,6 +90,15 @@ const Login = () => {
             Don't have an account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
           </p>
         </div>
+
+        <div className="mt-8 pt-6 border-t border-line">
+          <button
+            onClick={() => navigate("/demo")}
+            className="w-full py-3.5 rounded-full bg-tertiary/10 text-tertiary font-body font-semibold text-sm hover:bg-tertiary/20 transition-colors"
+          >
+            Try Demo — No account needed
+          </button>
+        </div>
       </div>
     </div>
   );

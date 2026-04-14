@@ -1,4 +1,4 @@
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useSessionState } from "@/hooks/useSessionState";
 import { useTherapyLogger } from "@/hooks/useTherapyLogger";
 import { useFalStreaming } from "@/hooks/useFalStreaming";
@@ -15,6 +15,9 @@ import UmayLogo from "@/components/UmayLogo";
 import { useCallback, useMemo, useEffect, useRef } from "react";
 import { TRIPWIRE_IDS, type TripwireId } from "@/types/therapyEvents";
 import { useUmayVoice } from "@/hooks/useUmayVoice";
+import { useDemoPlayback } from "@/hooks/useDemoPlayback";
+import { DEMO_SCRIPTS } from "@/data/demoScripts";
+import { Play, Square } from "lucide-react";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
   imago_core_dialogue: imagoProtocol,
@@ -37,9 +40,12 @@ function buildObserverUrl(sessionId: string): string | null {
 
 const Session = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const techniqueId = searchParams.get("technique") || "imago_core_dialogue";
   const protocol = PROTOCOLS[techniqueId] ?? imagoProtocol;
+  const isDemo = location.pathname.startsWith("/demo");
+  const homeRoute = isDemo ? "/demo" : "/";
 
   // Stable demo-scoped session ID for streaming + observer links
   const sessionId = useMemo(
@@ -89,6 +95,44 @@ const Session = () => {
   const turnIndexRef = useRef(0);
   const interventionInFlightRef = useRef(false);
 
+  // --- Demo playback (only active in demo mode) ---
+  const demoScript = useMemo(
+    () => (DEMO_SCRIPTS as Record<string, typeof DEMO_SCRIPTS["open_mediation_enactment"]>)[techniqueId] ?? [],
+    [techniqueId]
+  );
+
+  const demoStartSpeaking = useCallback(() => {
+    startSpeaking();
+  }, [startSpeaking]);
+
+  const demoStopSpeaking = useCallback(() => {
+    stopSpeaking();
+  }, [stopSpeaking]);
+
+  const demoTripwire = useCallback(
+    (tripwireId: TripwireId) => {
+      void handleTriggerInterventionRef.current?.(tripwireId);
+    },
+    []
+  );
+
+  const {
+    isPlaying: demoIsPlaying,
+    startPlayback: demoStartPlayback,
+    stopPlayback: demoStopPlayback,
+    demoAudioLevel,
+  } = useDemoPlayback({
+    script: demoScript,
+    onTranscript: setTranscript,
+    onTripwire: demoTripwire,
+    onAdvanceState: advanceState,
+    onStartSpeaking: demoStartSpeaking,
+    onStopSpeaking: demoStopSpeaking,
+  });
+
+  // Ref for handleTriggerIntervention so the demo callback doesn't go stale
+  const handleTriggerInterventionRef = useRef<((id: TripwireId) => void) | null>(null);
+
   // Sync STT transcript into session state
   useEffect(() => {
     if (sttTranscript) {
@@ -110,7 +154,7 @@ const Session = () => {
     toast.success("Session complete", {
       description: `Completed ${completedTurns} turns.`,
     });
-    navigate("/", { replace: true });
+    navigate(homeRoute, { replace: true });
   }, [isSessionComplete, completedTurns, navigate]);
 
   const currentTherapyState = getCurrentState();
@@ -123,6 +167,13 @@ const Session = () => {
   const isOpenMic = currentTherapyState?.type === "open_mic_stream";
   const isIntervention = currentTherapyState?.type === "system_interruption";
   const isOpenMediationTechnique = techniqueId === "open_mediation_enactment";
+
+  // Auto-skip grounding in demo mode
+  useEffect(() => {
+    if (isDemo && isGrounding) {
+      skipGrounding();
+    }
+  }, [isDemo, isGrounding, skipGrounding]);
 
   // Auto-complete intervention when TTS finishes speaking
   const prevAiSpeakingRef = useRef(false);
@@ -198,6 +249,9 @@ const Session = () => {
       speakIntervention,
     ]
   );
+
+  // Keep ref in sync so demo playback can call it without stale closures
+  handleTriggerInterventionRef.current = handleTriggerIntervention;
 
   // Combined start: session state + real mic
   const handleStartSpeaking = useCallback(() => {
@@ -311,7 +365,7 @@ const Session = () => {
               Observer
             </button>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate(homeRoute)}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200"
             >
               <X className="w-5 h-5" />
@@ -331,13 +385,13 @@ const Session = () => {
           orbState={currentTherapyState?.ui_config?.orb_state ?? "pulsing_listening"}
           isSpeaking={state.isSpeaking}
           aiSpeaking={aiIsSpeaking}
-          micLocked={state.micLock || isIntervention}
+          micLocked={demoIsPlaying || state.micLock || isIntervention}
           onStartSpeaking={handleStartSpeaking}
           onStopSpeaking={handleStopSpeaking}
           transcript={state.transcriptA || state.transcriptB}
-          liveLines={sttLines}
-          liveInterim={sttInterim}
-          audioLevel={sttAudioLevel}
+          liveLines={demoIsPlaying ? [] : sttLines}
+          liveInterim={demoIsPlaying ? "" : sttInterim}
+          audioLevel={demoIsPlaying ? demoAudioLevel : sttAudioLevel}
           isTranscribing={sttIsTranscribing}
         />
 
@@ -351,21 +405,49 @@ const Session = () => {
           />
         )}
 
-        {/* Debug: Trigger tripwire buttons */}
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-          {TRIPWIRE_IDS.map((tw) => (
+        {/* Demo play/stop button */}
+        {isDemo && (
+          <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
             <button
-              key={tw}
-              onClick={() => {
-                void handleTriggerIntervention(tw);
-              }}
-              className="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center hover:bg-tertiary/20 transition-colors duration-200"
-              title={`Trigger: ${tw}`}
+              onClick={demoIsPlaying ? demoStopPlayback : demoStartPlayback}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-body font-semibold text-sm transition-all duration-200 soft-shadow ${
+                demoIsPlaying
+                  ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  : "bg-primary text-primary-foreground hover:opacity-90"
+              }`}
             >
-              <AlertTriangle className="w-4 h-4 text-tertiary/60" />
+              {demoIsPlaying ? (
+                <>
+                  <Square className="w-4 h-4" />
+                  Stop Demo
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Play Demo
+                </>
+              )}
             </button>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Debug: Trigger tripwire buttons */}
+        {!isDemo && (
+          <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+            {TRIPWIRE_IDS.map((tw) => (
+              <button
+                key={tw}
+                onClick={() => {
+                  void handleTriggerIntervention(tw);
+                }}
+                className="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center hover:bg-tertiary/20 transition-colors duration-200"
+                title={`Trigger: ${tw}`}
+              >
+                <AlertTriangle className="w-4 h-4 text-tertiary/60" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -392,7 +474,7 @@ const Session = () => {
             Observer
           </button>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate(homeRoute)}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200"
           >
             <X className="w-5 h-5" />
@@ -417,16 +499,16 @@ const Session = () => {
         isSpeaking={state.isSpeaking && partnerAActive}
         speakingTimer={partnerAActive ? state.speakingTimer : 0}
         maxRecordingTime={maxTime}
-        micLocked={state.micLock || !partnerAActive}
+        micLocked={demoIsPlaying || state.micLock || !partnerAActive}
         strikeFlash={partnerAActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
         onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
-        isLiveRecording={sttIsRecording && partnerAActive}
-        liveLines={sttLines}
-        liveInterim={sttInterim}
-        audioLevel={sttAudioLevel}
-        isTranscribing={sttIsTranscribing && partnerAActive}
+        isLiveRecording={!demoIsPlaying && sttIsRecording && partnerAActive}
+        liveLines={demoIsPlaying ? [] : sttLines}
+        liveInterim={demoIsPlaying ? "" : sttInterim}
+        audioLevel={demoIsPlaying ? demoAudioLevel : sttAudioLevel}
+        isTranscribing={!demoIsPlaying && sttIsTranscribing && partnerAActive}
       />
 
       <CenterMediator
@@ -448,25 +530,53 @@ const Session = () => {
         isSpeaking={state.isSpeaking && partnerBActive}
         speakingTimer={partnerBActive ? state.speakingTimer : 0}
         maxRecordingTime={maxTime}
-        micLocked={state.micLock || !partnerBActive}
+        micLocked={demoIsPlaying || state.micLock || !partnerBActive}
         strikeFlash={partnerBActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
         onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
-        isLiveRecording={sttIsRecording && partnerBActive}
-        liveLines={sttLines}
-        liveInterim={sttInterim}
-        audioLevel={sttAudioLevel}
-        isTranscribing={sttIsTranscribing && partnerBActive}
+        isLiveRecording={!demoIsPlaying && sttIsRecording && partnerBActive}
+        liveLines={demoIsPlaying ? [] : sttLines}
+        liveInterim={demoIsPlaying ? "" : sttInterim}
+        audioLevel={demoIsPlaying ? demoAudioLevel : sttAudioLevel}
+        isTranscribing={!demoIsPlaying && sttIsTranscribing && partnerBActive}
       />
 
-      <button
-        onClick={handleStrike}
-        className="fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors duration-200"
-        title="Trigger Toxicity Strike (Debug)"
-      >
-        <Bug className="w-4 h-4 text-destructive/60" />
-      </button>
+      {/* Demo play/stop button */}
+      {isDemo && (
+        <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
+          <button
+            onClick={demoIsPlaying ? demoStopPlayback : demoStartPlayback}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full font-body font-semibold text-sm transition-all duration-200 soft-shadow ${
+              demoIsPlaying
+                ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                : "bg-primary text-primary-foreground hover:opacity-90"
+            }`}
+          >
+            {demoIsPlaying ? (
+              <>
+                <Square className="w-4 h-4" />
+                Stop Demo
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4" />
+                Play Demo
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {!isDemo && (
+        <button
+          onClick={handleStrike}
+          className="fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors duration-200"
+          title="Trigger Toxicity Strike (Debug)"
+        >
+          <Bug className="w-4 h-4 text-destructive/60" />
+        </button>
+      )}
     </div>
   );
 };
