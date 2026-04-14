@@ -2,7 +2,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSessionState } from "@/hooks/useSessionState";
 import { useTherapyLogger } from "@/hooks/useTherapyLogger";
 import { useFalStreaming } from "@/hooks/useFalStreaming";
-import { useAuth } from "@/contexts/AuthContext";
 import { GroundingOverlay } from "@/components/GroundingOverlay";
 import { PartnerZone } from "@/components/PartnerZone";
 import { CenterMediator } from "@/components/CenterMediator";
@@ -11,26 +10,42 @@ import { AIInterventionOverlay } from "@/components/AIInterventionOverlay";
 import { imagoProtocol } from "@/data/imagoProtocol";
 import { openMediationProtocol } from "@/data/openMediationProtocol";
 import { toast } from "sonner";
-import { Bug, X, AlertTriangle } from "lucide-react";
+import { Bug, X, AlertTriangle, ExternalLink } from "lucide-react";
 import UmayLogo from "@/components/UmayLogo";
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo, useEffect, useRef } from "react";
+import { TRIPWIRE_IDS, type TripwireId } from "@/types/therapyEvents";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
   imago_core_dialogue: imagoProtocol,
   open_mediation_enactment: openMediationProtocol,
 };
 
-const TRIPWIRE_IDS = ["the_loop", "the_missed_drop", "the_escalation", "the_stonewall"];
+function buildObserverUrl(sessionId: string): string | null {
+  const configuredBase = import.meta.env.VITE_OBSERVER_URL || "http://localhost:8081";
+
+  try {
+    const url = new URL(configuredBase, window.location.origin);
+    url.searchParams.set("view", "observer");
+    url.searchParams.set("session_id", sessionId);
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
 
 const Session = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { profile } = useAuth();
   const techniqueId = searchParams.get("technique") || "imago_core_dialogue";
   const protocol = PROTOCOLS[techniqueId] ?? imagoProtocol;
 
-  // Stable session ID for logging
-  const sessionId = useMemo(() => `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, []);
+  // Stable demo-scoped session ID for streaming + observer links
+  const sessionId = useMemo(
+    () => `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    []
+  );
+
+  const observerUrl = useMemo(() => buildObserverUrl(sessionId), [sessionId]);
 
   const {
     state,
@@ -48,7 +63,11 @@ const Session = () => {
     setTranscript,
   } = useSessionState(protocol);
 
-  const { logTurn, logIntervention } = useTherapyLogger(sessionId);
+  const { logAnalysisTick, logTurn, logIntervention } = useTherapyLogger(
+    sessionId,
+    techniqueId
+  );
+
   const {
     transcript: sttTranscript,
     lines: sttLines,
@@ -59,6 +78,11 @@ const Session = () => {
     stopRecording,
     error: sttError,
   } = useFalStreaming();
+
+  const chunkIndexRef = useRef(0);
+  const lastChunkTranscriptRef = useRef("");
+  const tickInFlightRef = useRef(false);
+  const interventionInFlightRef = useRef(false);
 
   // Sync STT transcript into session state
   useEffect(() => {
@@ -77,33 +101,175 @@ const Session = () => {
   const currentTherapyState = getCurrentState();
   const activeRole = currentTherapyState?.active_role;
   const maxTime = getMaxRecordingTime();
-  const layout = currentTherapyState?.layout;
+
+  // Determine layout mode
+  const isGrounding = currentTherapyState?.type === "breathing_exercise";
+  const isRoleReversal = currentTherapyState?.type === "role_reversal";
+  const isOpenMic = currentTherapyState?.type === "open_mic_stream";
+  const isIntervention = currentTherapyState?.type === "system_interruption";
+  const isOpenMediationTechnique = techniqueId === "open_mediation_enactment";
+
+  const getActiveSpeakerAndTranscript = useCallback(() => {
+    const speaker = state.activePartner === "A" ? "Partner A" : "Partner B";
+    const transcript =
+      state.activePartner === "A" ? state.transcriptA : state.transcriptB;
+    return { speaker, transcript };
+  }, [state.activePartner, state.transcriptA, state.transcriptB]);
+
+  const handleOpenObserver = useCallback(() => {
+    if (!observerUrl) {
+      toast.error("Observer URL is invalid", {
+        description: "Check VITE_OBSERVER_URL in your environment.",
+      });
+      return;
+    }
+    window.open(observerUrl, "_blank", "noopener,noreferrer");
+  }, [observerUrl]);
+
+  const handleTriggerIntervention = useCallback(
+    async (tripwireId: TripwireId) => {
+      if (
+        interventionInFlightRef.current ||
+        state.currentStateKey === "state_ai_intervention"
+      ) {
+        return;
+      }
+
+      interventionInFlightRef.current = true;
+      try {
+        if (sttIsRecording) {
+          const finalTranscript = await stopRecording();
+          if (finalTranscript) {
+            setTranscript(finalTranscript);
+          }
+        }
+
+        stopSpeaking();
+
+        const interventionState = protocol.states["state_ai_intervention"];
+        const text =
+          interventionState?.intervention_templates?.[tripwireId] ??
+          "Let us pause.";
+
+        await logIntervention(text);
+        triggerIntervention(tripwireId);
+      } finally {
+        interventionInFlightRef.current = false;
+      }
+    },
+    [
+      state.currentStateKey,
+      sttIsRecording,
+      stopRecording,
+      setTranscript,
+      stopSpeaking,
+      protocol,
+      logIntervention,
+      triggerIntervention,
+    ]
+  );
 
   // Combined start: session state + real mic
   const handleStartSpeaking = useCallback(() => {
+    chunkIndexRef.current = 0;
+    lastChunkTranscriptRef.current = "";
+
     startSpeaking();
-    startRecording();
+    void startRecording();
   }, [startSpeaking, startRecording]);
 
-  // Combined stop: stop mic, get final transcript, log, stop session state
+  // Combined stop: stop mic, get final transcript, send final event, then stop session state
   const handleStopSpeaking = useCallback(async () => {
     const finalTranscript = await stopRecording();
     if (finalTranscript) {
       setTranscript(finalTranscript);
     }
-    const transcript = finalTranscript || (state.activePartner === "A" ? state.transcriptA : state.transcriptB);
-    const speaker = state.activePartner === "A" ? "Partner A" : "Partner B";
-    logTurn(speaker, transcript, state.currentStateKey);
-    stopSpeaking();
-  }, [stopRecording, stopSpeaking, logTurn, setTranscript, state.activePartner, state.transcriptA, state.transcriptB, state.currentStateKey]);
 
-  // Wrap triggerIntervention to log it
-  const handleTriggerIntervention = useCallback((tripwireId: string) => {
-    const interventionState = protocol.states["state_ai_intervention"];
-    const text = interventionState?.intervention_templates?.[tripwireId] ?? "Let us pause.";
-    logIntervention(tripwireId, text);
-    triggerIntervention(tripwireId);
-  }, [triggerIntervention, logIntervention, protocol]);
+    const { speaker, transcript: currentTranscript } = getActiveSpeakerAndTranscript();
+    const transcript = finalTranscript || currentTranscript;
+    const chunkIndex = chunkIndexRef.current > 0 ? chunkIndexRef.current - 1 : null;
+
+    const decision = await logTurn(
+      speaker,
+      transcript,
+      state.currentStateKey,
+      chunkIndex
+    );
+
+    stopSpeaking();
+
+    if (
+      isOpenMediationTechnique &&
+      decision?.action_decision === "interrupt" &&
+      decision.detected_tripwire &&
+      state.currentStateKey !== "state_ai_intervention"
+    ) {
+      await handleTriggerIntervention(decision.detected_tripwire);
+    }
+  }, [
+    stopRecording,
+    setTranscript,
+    getActiveSpeakerAndTranscript,
+    logTurn,
+    state.currentStateKey,
+    stopSpeaking,
+    isOpenMediationTechnique,
+    handleTriggerIntervention,
+  ]);
+
+  // Stream chunk analysis every 2s while actively speaking in Open Mediation
+  useEffect(() => {
+    if (!isOpenMediationTechnique || !state.isSpeaking || isIntervention) {
+      return;
+    }
+
+    const intervalId = window.setInterval(async () => {
+      if (tickInFlightRef.current || interventionInFlightRef.current) {
+        return;
+      }
+
+      const { speaker, transcript } = getActiveSpeakerAndTranscript();
+      const trimmed = transcript.trim();
+      if (!trimmed || trimmed === lastChunkTranscriptRef.current) {
+        return;
+      }
+
+      tickInFlightRef.current = true;
+      try {
+        const decision = await logAnalysisTick(
+          speaker,
+          trimmed,
+          state.currentStateKey,
+          chunkIndexRef.current
+        );
+
+        lastChunkTranscriptRef.current = trimmed;
+        chunkIndexRef.current += 1;
+
+        if (
+          decision?.action_decision === "interrupt" &&
+          decision.detected_tripwire &&
+          state.currentStateKey !== "state_ai_intervention"
+        ) {
+          await handleTriggerIntervention(decision.detected_tripwire);
+        }
+      } finally {
+        tickInFlightRef.current = false;
+      }
+    }, 2000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [
+    isOpenMediationTechnique,
+    state.isSpeaking,
+    isIntervention,
+    getActiveSpeakerAndTranscript,
+    logAnalysisTick,
+    state.currentStateKey,
+    handleTriggerIntervention,
+  ]);
 
   const handleStrike = () => {
     if (state.strikeCount >= 2) {
@@ -114,19 +280,13 @@ const Session = () => {
     triggerStrike();
   };
 
-  // Determine layout mode
-  const isGrounding = currentTherapyState?.type === "breathing_exercise";
-  const isRoleReversal = currentTherapyState?.type === "role_reversal";
-  const isOpenMic = currentTherapyState?.type === "open_mic_stream";
-  const isIntervention = currentTherapyState?.type === "system_interruption";
-
   // Split-screen partner logic (Imago)
   const partnerAIsSender =
     activeRole === "SENDER"
       ? state.activePartner === "A"
       : activeRole === "RECEIVER"
-      ? state.activePartner !== "A"
-      : false;
+        ? state.activePartner !== "A"
+        : false;
 
   const partnerAActive =
     !isGrounding &&
@@ -149,7 +309,8 @@ const Session = () => {
     const interventionState = protocol.states["state_ai_intervention"];
     const interventionText =
       state.activeTripwire && interventionState?.intervention_templates
-        ? interventionState.intervention_templates[state.activeTripwire] ?? "Let us pause and take a breath together."
+        ? interventionState.intervention_templates[state.activeTripwire] ??
+          "Let us pause and take a breath together."
         : "";
 
     return (
@@ -162,14 +323,25 @@ const Session = () => {
         <header className="fixed top-0 left-0 right-0 z-[60] pt-4 px-6 flex justify-between items-center pointer-events-none">
           <div className="flex items-center gap-2 pointer-events-auto">
             <UmayLogo className="w-6 h-6 text-primary" />
-            <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
+            <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">
+              Umay
+            </span>
           </div>
-          <button
-            onClick={() => navigate("/")}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200 pointer-events-auto"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <button
+              onClick={handleOpenObserver}
+              className="px-3 h-10 rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200 flex items-center gap-1.5 text-xs font-medium"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Observer
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         {/* Open mic label */}
@@ -206,7 +378,9 @@ const Session = () => {
           {TRIPWIRE_IDS.map((tw) => (
             <button
               key={tw}
-              onClick={() => handleTriggerIntervention(tw)}
+              onClick={() => {
+                void handleTriggerIntervention(tw);
+              }}
               className="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center hover:bg-tertiary/20 transition-colors duration-200"
               title={`Trigger: ${tw}`}
             >
@@ -227,14 +401,25 @@ const Session = () => {
       <header className="fixed top-0 left-0 right-0 z-[60] pt-4 px-6 flex justify-between items-center pointer-events-none">
         <div className="flex items-center gap-2 pointer-events-auto">
           <UmayLogo className="w-6 h-6 text-primary" />
-          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
+          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">
+            Umay
+          </span>
         </div>
-        <button
-          onClick={() => navigate("/")}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200 pointer-events-auto"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            onClick={handleOpenObserver}
+            className="px-3 h-10 rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200 flex items-center gap-1.5 text-xs font-medium"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Observer
+          </button>
+          <button
+            onClick={() => navigate("/")}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest transition-colors duration-200"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       {isGrounding && (

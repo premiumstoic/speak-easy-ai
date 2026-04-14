@@ -1,64 +1,115 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type {
+  TherapyDecisionResponse,
+  TherapyEventRequest,
+  TherapyEventType,
+} from "@/types/therapyEvents";
 
-interface LogEntry {
-  session_id: string;
+interface LogInput {
   speaker: string;
-  raw_transcript: string;
-  ai_analysis: Record<string, unknown>;
+  transcript: string;
+  stateKey: string;
+  eventType: TherapyEventType;
+  chunkIndex: number | null;
 }
 
-export function useTherapyLogger(sessionId: string) {
-  const turnCounter = useRef(0);
+function isDecisionResponse(value: unknown): value is TherapyDecisionResponse {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    (candidate.action_decision === "interrupt" || candidate.action_decision === "null") &&
+    typeof candidate.confidence_score === "number" &&
+    "detected_tripwire" in candidate &&
+    typeof candidate.reasoning_summary === "string" &&
+    "persisted_log_id" in candidate
+  );
+}
 
-  const log = useCallback(async (entry: Omit<LogEntry, "session_id">) => {
-    turnCounter.current++;
-    const { error } = await supabase.from("therapy_logs").insert([{
-      session_id: sessionId,
-      speaker: entry.speaker,
-      raw_transcript: entry.raw_transcript,
-      ai_analysis: entry.ai_analysis as unknown as import("@/integrations/supabase/types").Json,
-    }]);
-    if (error) console.warn("[TherapyLogger] insert failed:", error.message);
-  }, [sessionId]);
+export function useTherapyLogger(sessionId: string, techniqueId: string) {
+  const log = useCallback(
+    async (entry: LogInput): Promise<TherapyDecisionResponse | null> => {
+      const payload: TherapyEventRequest = {
+        session_id: sessionId,
+        technique_id: techniqueId,
+        state_key: entry.stateKey,
+        speaker: entry.speaker,
+        transcript: entry.transcript,
+        event_type: entry.eventType,
+        chunk_index: entry.chunkIndex,
+        client_ts: new Date().toISOString(),
+      };
 
-  /** Log a partner's speaking turn */
-  const logTurn = useCallback(
-    (speaker: "Partner A" | "Partner B", transcript: string, stateKey: string) => {
-      if (!transcript.trim()) return;
-      log({
+      const { data, error } = await supabase.functions.invoke("process-therapy-event", {
+        body: payload,
+      });
+
+      if (error) {
+        console.warn("[TherapyLogger] edge function invoke failed:", error.message);
+        return null;
+      }
+
+      if (!isDecisionResponse(data)) {
+        console.warn("[TherapyLogger] invalid edge function response shape");
+        return null;
+      }
+
+      return data;
+    },
+    [sessionId, techniqueId]
+  );
+
+  const logAnalysisTick = useCallback(
+    async (
+      speaker: "Partner A" | "Partner B",
+      transcript: string,
+      stateKey: string,
+      chunkIndex: number
+    ): Promise<TherapyDecisionResponse | null> => {
+      if (!transcript.trim()) return null;
+      return log({
         speaker,
-        raw_transcript: transcript,
-        ai_analysis: {
-          turn_number: turnCounter.current + 1,
-          state_key: stateKey,
-          confidence_score: 0,
-          detected_tripwire: null,
-          action_decision: "null",
-          chain_of_thought_scratchpad: `Turn ${turnCounter.current + 1}: ${speaker} spoke during ${stateKey}. Content analysis pending.`,
-        },
+        transcript,
+        stateKey,
+        eventType: "analysis_tick",
+        chunkIndex,
       });
     },
     [log]
   );
 
-  /** Log an AI intervention (tripwire triggered) */
+  const logTurn = useCallback(
+    async (
+      speaker: "Partner A" | "Partner B",
+      transcript: string,
+      stateKey: string,
+      chunkIndex: number | null
+    ): Promise<TherapyDecisionResponse | null> => {
+      if (!transcript.trim()) return null;
+      return log({
+        speaker,
+        transcript,
+        stateKey,
+        eventType: "turn_final",
+        chunkIndex,
+      });
+    },
+    [log]
+  );
+
   const logIntervention = useCallback(
-    (tripwireId: string, interventionText: string) => {
-      log({
+    async (interventionText: string): Promise<TherapyDecisionResponse | null> => {
+      if (!interventionText.trim()) return null;
+      return log({
         speaker: "System",
-        raw_transcript: interventionText,
-        ai_analysis: {
-          turn_number: turnCounter.current + 1,
-          confidence_score: 0.92,
-          detected_tripwire: tripwireId,
-          action_decision: "interrupt",
-          chain_of_thought_scratchpad: `[TRIPWIRE DETECTED] ID: ${tripwireId}. Confidence exceeds threshold (0.92 >= 0.85). Initiating pattern interrupt sequence. Playing singing bowl chime → delivering intervention template → returning to open floor.`,
-        },
+        transcript: interventionText,
+        stateKey: "state_ai_intervention",
+        eventType: "turn_final",
+        chunkIndex: null,
       });
     },
     [log]
   );
 
-  return { logTurn, logIntervention };
+  return { logAnalysisTick, logTurn, logIntervention };
 }

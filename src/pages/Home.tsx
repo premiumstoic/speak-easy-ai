@@ -49,10 +49,15 @@ const Home = () => {
 
     for (const turn of DEMO_TURNS) {
       const ai_analysis: Record<string, unknown> = {
+        event_type: "turn_final",
+        chunk_index: count,
         turn_number: count + 1,
         confidence_score: turn.tripwire ? 0.85 + Math.random() * 0.12 : Math.random() * 0.4,
         detected_tripwire: turn.tripwire,
         action_decision: turn.tripwire ? "interrupt" : "null",
+        reasoning_summary: turn.tripwire
+          ? `[${turn.tripwire}] threshold crossed. Triggering intervention.`
+          : `No tripwire crossed for turn ${count + 1}.`,
         chain_of_thought_scratchpad: turn.tripwire
           ? `[ANALYSIS] Evaluating 20-turn context window... Semantic markers detected for "${turn.tripwire}". Cosine similarity: ${(0.7 + Math.random() * 0.25).toFixed(2)}. Affective trajectory: negative valence sustained. Confidence: ${(0.85 + Math.random() * 0.12).toFixed(2)} >= 0.85 threshold. ACTION: interrupt.`
           : `[ANALYSIS] Turn ${count + 1} by ${turn.speaker}. No tripwire markers exceed threshold. Confidence: ${(Math.random() * 0.4).toFixed(2)}. ACTION: null. Maintaining silence.`,
