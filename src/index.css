@@ -115,6 +115,11 @@
     box-shadow: 0 0 40px rgba(77, 101, 77, 0.15);
   }
 
+  .session-glow {
+    box-shadow: 0 0 40px rgba(77, 101, 77, 0.3), 0 0 80px rgba(77, 101, 77, 0.15);
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
