@@ -3,7 +3,6 @@ import { Map, Mic, User } from "lucide-react";
 
 const navItems = [
   { icon: Map, label: "Journey", path: "/journey" },
-  { icon: Mic, label: "Session", path: "/session" },
   { icon: User, label: "Profile", path: "/profile" },
 ];
 

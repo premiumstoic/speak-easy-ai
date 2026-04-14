@@ -1,127 +1,115 @@
 import { useNavigate } from "react-router-dom";
-import { Mic, TrendingUp, Leaf } from "lucide-react";
+import { Mic, Leaf } from "lucide-react";
 import { InsightCard } from "@/components/InsightCard";
-import { BottomNav } from "@/components/BottomNav";
 
 const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 pt-4 bg-background/30 backdrop-blur-md">
-        <div className="flex justify-between items-center w-full px-8 max-w-screen-xl mx-auto">
-          <div className="flex items-center gap-2">
-            <Leaf className="w-5 h-5 text-primary" />
-            <span className="font-headline text-lg font-bold italic tracking-tight text-primary">Sanctuary</span>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-muted-foreground font-headline font-bold text-sm">
-            S
-          </div>
+      <header className="pt-4 pb-2 px-6 flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-2">
+          <Leaf className="w-5 h-5 text-primary" />
+          <span className="font-headline text-lg font-bold italic tracking-tight text-primary">Sanctuary</span>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-muted-foreground font-headline font-bold text-sm">
+          S
         </div>
       </header>
 
-      <main className="pt-24 px-6 max-w-screen-xl mx-auto">
-        {/* Hero */}
-        <section className="mt-12 text-center" style={{ animation: "float-in 0.8s cubic-bezier(0.2,0.8,0.2,1)" }}>
-          <div className="mb-6 text-muted-foreground font-medium tracking-wide text-sm uppercase">
-            Welcome back, Sarah & Tom
-          </div>
-          <h1 className="text-5xl md:text-7xl font-headline font-extrabold tracking-tight mb-12 max-w-3xl mx-auto leading-[1.1]">
-            How is your heart <br />
-            <span className="text-primary italic">today?</span>
-          </h1>
+      {/* Center: Start Session */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 -mt-8">
+        <div className="text-muted-foreground font-medium tracking-wide text-sm uppercase mb-4 animate-fade-in">
+          Welcome back, Sarah & Tom
+        </div>
+        <h1 className="text-3xl font-headline font-extrabold tracking-tight mb-10 text-center leading-tight animate-fade-in">
+          How is your heart <br />
+          <span className="text-primary italic">today?</span>
+        </h1>
 
-          <div className="relative group cursor-pointer inline-block">
-            <div className="absolute inset-0 bg-primary opacity-10 blur-3xl rounded-full group-hover:opacity-20 transition-opacity duration-700" />
-            <button
-              onClick={() => navigate("/session")}
-              className="relative bg-gradient-to-br from-primary to-primary-dim text-primary-foreground px-12 py-8 rounded-full flex flex-col items-center gap-2 shadow-xl hover:scale-[1.02] transition-all duration-500 ease-sanctuary active:scale-95"
-            >
-              <Mic className="w-9 h-9 mb-1" />
-              <span className="font-headline text-xl font-bold tracking-tight">Start Session</span>
-              <span className="text-primary-foreground/70 text-xs font-medium">15 min reflection</span>
-            </button>
-          </div>
-        </section>
-
-        {/* Insights Feed */}
-        <section className="mt-24" style={{ animation: "float-in 1s cubic-bezier(0.2,0.8,0.2,1) 0.2s both" }}>
-          <div className="flex items-end justify-between mb-8 px-2">
-            <div>
-              <h2 className="font-headline text-2xl font-bold tracking-tight mb-1">Insights Feed</h2>
-              <p className="text-on-surface-variant text-sm">Gentle nudges for your connection</p>
-            </div>
-            <button className="text-primary font-semibold text-sm hover:underline">View History</button>
-          </div>
-          <div className="flex gap-5 overflow-x-auto no-scrollbar pb-8 -mx-6 px-6 snap-x">
-            <InsightCard
-              type="notification"
-              title="Gratitude"
-              body="Tom completed his daily gratitude reflection. He mentioned your support during dinner."
-              action="Acknowledge"
-            />
-            <InsightCard
-              type="question"
-              title="Deep Question"
-              body="What is one thing your partner did this week that made you feel safe?"
-            />
-            <InsightCard
-              type="reminder"
-              title="Reminder"
-              body='Your "No-Screen Night" is scheduled for tonight at 8:00 PM.'
-              progress={80}
-            />
-          </div>
-        </section>
-
-        {/* Relationship Pulse + Today's Focus */}
-        <section className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8" style={{ animation: "float-in 1s cubic-bezier(0.2,0.8,0.2,1) 0.4s both" }}>
-          {/* Relationship Pulse */}
-          <div className="bg-surface-container-low rounded-xl p-10 flex flex-col md:flex-row items-center gap-8">
-            <div className="w-28 h-28 shrink-0 rounded-full bg-primary-container flex items-center justify-center">
-              <TrendingUp className="w-10 h-10 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-headline text-2xl font-bold mb-2">Relationship Pulse</h3>
-              <p className="text-on-surface-variant leading-relaxed mb-4">
-                Your emotional harmony is trending upward this week. You both are communicating 15% more effectively.
-              </p>
-              <div className="inline-flex items-center gap-2 py-2 px-4 bg-primary-container text-on-primary-container rounded-full text-sm font-bold">
-                <TrendingUp className="w-4 h-4" />
-                Excellent
-              </div>
-            </div>
-          </div>
-
-          {/* Today's Focus */}
-          <div className="bg-surface-container-lowest rounded-xl p-10">
-            <h3 className="font-headline text-xl font-bold mb-6">Today's Focus</h3>
-            <ul className="space-y-6">
-              <li className="flex items-start gap-4">
-                <div className="w-6 h-6 rounded-full border-2 border-primary mt-1 flex items-center justify-center">
-                  <div className="w-3 h-3 bg-primary rounded-full" />
-                </div>
-                <div>
-                  <div className="font-bold">Active Listening Exercise</div>
-                  <div className="text-sm text-on-surface-variant">Repeat what you heard before responding</div>
-                </div>
-              </li>
-              <li className="flex items-start gap-4 opacity-50">
-                <div className="w-6 h-6 rounded-full border-2 border-outline-variant mt-1" />
-                <div>
-                  <div className="font-bold">Express Gratitude</div>
-                  <div className="text-sm text-on-surface-variant">Tell Tom one thing you appreciate</div>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </section>
+        <div className="relative group cursor-pointer" onClick={() => navigate("/session")}>
+          {/* Outer glow rings */}
+          <div className="absolute inset-0 rounded-full bg-primary/10 blur-3xl scale-150 animate-[pulse_3s_ease-in-out_infinite]" />
+          <div className="absolute inset-0 rounded-full bg-primary/5 blur-2xl scale-125 animate-[pulse_3s_ease-in-out_infinite_0.5s]" />
+          
+          {/* Button */}
+          <button
+            className="relative w-36 h-36 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground flex flex-col items-center justify-center gap-1.5 shadow-2xl hover:scale-105 active:scale-95 transition-all duration-500 ease-sanctuary session-glow"
+          >
+            <Mic className="w-10 h-10 mb-1" />
+            <span className="font-headline text-base font-bold tracking-tight">Start Session</span>
+            <span className="text-primary-foreground/60 text-[10px] font-medium">15 min reflection</span>
+          </button>
+        </div>
       </main>
 
-      <BottomNav />
+      {/* Bottom: Insights Carousel */}
+      <section className="shrink-0 pb-24 pt-4">
+        <div className="flex items-center justify-between px-6 mb-3">
+          <h2 className="font-headline text-sm font-bold tracking-tight text-muted-foreground uppercase">Insights</h2>
+        </div>
+        <div className="flex gap-3 overflow-x-auto no-scrollbar px-6 snap-x">
+          <InsightCard
+            type="notification"
+            title="Gratitude"
+            body="Tom completed his daily gratitude reflection."
+            action="Acknowledge"
+          />
+          <InsightCard
+            type="question"
+            title="Deep Question"
+            body="What made you feel safe this week?"
+          />
+          <InsightCard
+            type="reminder"
+            title="Reminder"
+            body="No-Screen Night tonight at 8 PM."
+            progress={80}
+          />
+        </div>
+      </section>
+
+      {/* Bottom Nav */}
+      <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
+        <div className="w-[90%] max-w-md rounded-full px-6 py-3 glass-nav shadow-[0_20px_40px_rgba(77,101,77,0.06)] flex justify-around items-center">
+          {[
+            { icon: "home", label: "Home", path: "/" },
+            { icon: "map", label: "Journey", path: "/journey" },
+            { icon: "user", label: "Profile", path: "/profile" },
+          ].map(({ label, path }) => {
+            const isActive = path === "/";
+            return (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                className={`p-4 rounded-full transition-all duration-300 ${
+                  isActive
+                    ? "bg-primary-container text-on-primary-container scale-110 shadow-lg"
+                    : "text-muted-foreground hover:bg-surface-container-high"
+                }`}
+              >
+                {label === "Home" && <HomeIcon />}
+                {label === "Journey" && <MapIcon />}
+                {label === "Profile" && <UserIcon />}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 };
+
+// Inline icon components to avoid import clutter
+const HomeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+);
+const MapIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+);
+const UserIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+);
 
 export default Home;
