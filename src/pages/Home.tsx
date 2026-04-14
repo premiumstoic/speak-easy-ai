@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { Mic, Waves } from "lucide-react";
+import { Mic, Waves, Zap } from "lucide-react";
 import { InsightCard } from "@/components/InsightCard";
 import UmayLogo from "@/components/UmayLogo";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 const techniques = [
   {
