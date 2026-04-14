@@ -218,7 +218,7 @@ const Session = () => {
     turnIndexRef.current += 1;
 
     const decision = await logTurn(
-      speaker,
+      speaker as "Partner A" | "Partner B",
       transcript,
       state.currentStateKey,
       chunkIndex,

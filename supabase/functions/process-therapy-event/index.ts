@@ -562,7 +562,7 @@ export async function handler(req: Request): Promise<Response> {
     persisted_log_id: inserted?.id ?? null,
   };
 
-  return withJson(200, response);
+  return withJson(200, response as unknown as Record<string, unknown>);
 }
 
 if (import.meta.main) {

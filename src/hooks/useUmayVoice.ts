@@ -26,8 +26,7 @@ export const useUmayVoice = () => {
           text: text,
           voice: voiceId,
           stability: stability,
-          apply_text_normalization: 'auto'
-        }
+        } as any
       });
 
       // The endpoint returns an audio_url. We play it natively in the browser.
