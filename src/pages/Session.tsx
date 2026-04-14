@@ -149,7 +149,7 @@ const Session = () => {
           isSpeaking={state.isSpeaking}
           micLocked={state.micLock || isIntervention}
           onStartSpeaking={startSpeaking}
-          onStopSpeaking={stopSpeaking}
+          onStopSpeaking={handleStopSpeaking}
           transcript={state.transcriptA || state.transcriptB}
         />
 
@@ -167,7 +167,7 @@ const Session = () => {
           {TRIPWIRE_IDS.map((tw) => (
             <button
               key={tw}
-              onClick={() => triggerIntervention(tw)}
+              onClick={() => handleTriggerIntervention(tw)}
               className="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center hover:bg-tertiary/20 transition-colors duration-200"
               title={`Trigger: ${tw}`}
             >
@@ -219,7 +219,7 @@ const Session = () => {
         strikeFlash={partnerAActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
         onStartSpeaking={startSpeaking}
-        onStopSpeaking={stopSpeaking}
+        onStopSpeaking={handleStopSpeaking}
       />
 
       <CenterMediator
@@ -245,7 +245,7 @@ const Session = () => {
         strikeFlash={partnerBActive ? state.strikeFlash : null}
         strikeCount={state.strikeCount}
         onStartSpeaking={startSpeaking}
-        onStopSpeaking={stopSpeaking}
+        onStopSpeaking={handleStopSpeaking}
       />
 
       <button
