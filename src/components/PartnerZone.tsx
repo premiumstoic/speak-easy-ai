@@ -31,6 +31,7 @@ export function PartnerZone({
   strikeCount,
   onStartSpeaking,
   onStopSpeaking,
+  isLiveRecording = false,
 }: PartnerZoneProps) {
   const warningThreshold = maxRecordingTime - 10;
   const isWarning = speakingTimer >= warningThreshold || strikeCount >= 2;
