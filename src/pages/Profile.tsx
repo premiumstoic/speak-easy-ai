@@ -1,10 +1,12 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { Heart, Clock, Shield, LogOut, Sparkles, User, Settings, ChevronRight } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [reminders, setReminders] = useState(true);
   const [privacy, setPrivacy] = useState(true);
@@ -107,7 +109,13 @@ const Profile = () => {
         </section>
 
         {/* Sign Out */}
-        <button className="w-full flex items-center justify-center gap-2 py-3 text-destructive font-semibold text-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors duration-200 font-body">
+        <button
+          onClick={async () => {
+            await signOut();
+            navigate("/login");
+          }}
+          className="w-full flex items-center justify-center gap-2 py-3 text-destructive font-semibold text-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors duration-200 font-body"
+        >
           <LogOut className="w-4 h-4" />
           Sign Out
         </button>
