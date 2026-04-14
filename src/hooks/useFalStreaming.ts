@@ -14,6 +14,7 @@ interface UseFalStreamingReturn {
   interimTranscript: string;
   audioLevel: number;
   isRecording: boolean;
+  isTranscribing: boolean;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<string>;
   error: string | null;
@@ -25,6 +26,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
   const [interimTranscript, setInterimTranscript] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -149,7 +151,9 @@ export function useFalStreaming(): UseFalStreamingReturn {
           setInterimTranscript(interim.trim());
         };
 
-        recognition.onerror = () => {};
+        recognition.onerror = (e: any) => {
+          console.warn("[useFalStreaming] SpeechRecognition error:", e.error);
+        };
         recognition.onend = () => {
           if (!isStoppingRef.current && recognitionRef.current) {
             try { recognition.start(); } catch {}
@@ -216,12 +220,14 @@ export function useFalStreaming(): UseFalStreamingReturn {
         }
 
         // Layer 2: fal.ai Whisper for final high-accuracy transcript
+        setIsTranscribing(true);
         const falText = await transcribeBlob(finalBlob);
+        setIsTranscribing(false);
         if (falText) {
           transcriptRef.current = falText;
           setTranscript(falText);
-          // On devices without Web Speech API (e.g. iOS), lines will be empty —
-          // populate from FAL result so the ticker has something to show
+          // On devices without Web Speech API (e.g. iOS/Android fallback),
+          // lines will be empty — populate from FAL so the ticker has content
           if (linesRef.current.length === 0) {
             linesRef.current = [falText];
             setLines([falText]);
@@ -234,5 +240,5 @@ export function useFalStreaming(): UseFalStreamingReturn {
     });
   }, [cleanup, transcribeBlob, getAccumulatedBlob]);
 
-  return { transcript, lines, interimTranscript, audioLevel, isRecording, startRecording, stopRecording, error };
+  return { transcript, lines, interimTranscript, audioLevel, isRecording, isTranscribing, startRecording, stopRecording, error };
 }

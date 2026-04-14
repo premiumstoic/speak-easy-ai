@@ -18,6 +18,7 @@ interface PartnerZoneProps {
   liveLines?: string[];
   liveInterim?: string;
   audioLevel?: number;
+  isTranscribing?: boolean;
 }
 
 export function PartnerZone({
@@ -38,6 +39,7 @@ export function PartnerZone({
   liveLines = [],
   liveInterim = "",
   audioLevel = 0,
+  isTranscribing = false,
 }: PartnerZoneProps) {
   const warningThreshold = maxRecordingTime - 10;
   const isWarning = speakingTimer >= warningThreshold || strikeCount >= 2;
@@ -98,8 +100,8 @@ export function PartnerZone({
           </div>
         </div>
 
-        {/* Live transcription ticker — shown while recording */}
-        {isActive && isLiveRecording && (
+        {/* Live transcription ticker — shown while recording or transcribing */}
+        {isActive && (isLiveRecording || isTranscribing) && (
           <div className="max-w-xs w-full px-4">
             <div className="rounded-xl bg-surface-container/70 backdrop-blur-sm px-3 py-2 max-h-20 overflow-y-auto flex flex-col gap-0.5">
               {liveLines.slice(-3).map((line, i) => (
@@ -111,7 +113,10 @@ export function PartnerZone({
                   <span className="inline-block w-0.5 h-3 bg-primary ml-0.5 align-text-bottom" style={{ animation: "pulse-soft 1s infinite" }} />
                 </p>
               )}
-              {!liveLines.length && !liveInterim && (
+              {isTranscribing && !liveInterim && (
+                <p className="text-xs text-on-surface-variant/40 italic">Transcribing…</p>
+              )}
+              {isLiveRecording && !isTranscribing && !liveLines.length && !liveInterim && (
                 <p className="text-xs text-on-surface-variant/40 italic">Listening…</p>
               )}
             </div>
