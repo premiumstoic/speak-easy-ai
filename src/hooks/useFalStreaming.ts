@@ -10,6 +10,9 @@ const SpeechRecognition =
 
 interface UseFalStreamingReturn {
   transcript: string;
+  lines: string[];
+  interimTranscript: string;
+  audioLevel: number;
   isRecording: boolean;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<string>;
@@ -18,6 +21,9 @@ interface UseFalStreamingReturn {
 
 export function useFalStreaming(): UseFalStreamingReturn {
   const [transcript, setTranscript] = useState("");
+  const [lines, setLines] = useState<string[]>([]);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [audioLevel, setAudioLevel] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +32,11 @@ export function useFalStreaming(): UseFalStreamingReturn {
   const chunksRef = useRef<Blob[]>([]);
   const isStoppingRef = useRef(false);
   const transcriptRef = useRef("");
+  const linesRef = useRef<string[]>([]);
   const recognitionRef = useRef<any>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => { cleanup(); };
@@ -34,6 +44,15 @@ export function useFalStreaming(): UseFalStreamingReturn {
   }, []);
 
   const cleanup = useCallback(() => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
@@ -46,6 +65,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
       recognitionRef.current = null;
     }
     mediaRecorderRef.current = null;
+    setAudioLevel(0);
   }, []);
 
   const transcribeBlob = useCallback(async (audioBlob: Blob): Promise<string> => {
@@ -72,13 +92,33 @@ export function useFalStreaming(): UseFalStreamingReturn {
   const startRecording = useCallback(async () => {
     setError(null);
     setTranscript("");
+    setLines([]);
+    setInterimTranscript("");
     transcriptRef.current = "";
+    linesRef.current = [];
     chunksRef.current = [];
     isStoppingRef.current = false;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+
+      // Audio level analyser — drives the mic visualizer
+      const audioCtx = new AudioContext();
+      audioContextRef.current = audioCtx;
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyserRef.current = analyser;
+      audioCtx.createMediaStreamSource(stream).connect(analyser);
+      const freqData = new Uint8Array(analyser.frequencyBinCount);
+      const tickLevel = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(freqData);
+        const avg = freqData.reduce((s, v) => s + v, 0) / freqData.length;
+        setAudioLevel(avg / 255);
+        animFrameRef.current = requestAnimationFrame(tickLevel);
+      };
+      animFrameRef.current = requestAnimationFrame(tickLevel);
 
       // Layer 1: Web Speech API — instant local transcript
       if (SpeechRecognition) {
@@ -89,18 +129,24 @@ export function useFalStreaming(): UseFalStreamingReturn {
 
         recognition.onresult = (event: any) => {
           if (isStoppingRef.current) return;
-          let final = "";
+          const newFinals: string[] = [];
           let interim = "";
-          for (let i = 0; i < event.results.length; i++) {
+          for (let i = event.resultIndex; i < event.results.length; i++) {
             const r = event.results[i];
-            if (r.isFinal) final += r[0].transcript;
-            else interim += r[0].transcript;
+            if (r.isFinal) {
+              const text = r[0].transcript.trim();
+              if (text) newFinals.push(text);
+            } else {
+              interim += r[0].transcript;
+            }
           }
-          const combined = (final + (interim ? " " + interim : "")).trim();
-          if (combined) {
-            transcriptRef.current = combined;
-            setTranscript(combined);
+          if (newFinals.length > 0) {
+            linesRef.current = [...linesRef.current, ...newFinals];
+            setLines([...linesRef.current]);
+            transcriptRef.current = linesRef.current.join(" ");
+            setTranscript(transcriptRef.current);
           }
+          setInterimTranscript(interim.trim());
         };
 
         recognition.onerror = () => {};
@@ -144,6 +190,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
       try { recognitionRef.current.stop(); } catch {}
       recognitionRef.current = null;
     }
+    setInterimTranscript("");
 
     return new Promise<string>((resolve) => {
       const recorder = mediaRecorderRef.current;
@@ -181,5 +228,5 @@ export function useFalStreaming(): UseFalStreamingReturn {
     });
   }, [cleanup, transcribeBlob, getAccumulatedBlob]);
 
-  return { transcript, isRecording, startRecording, stopRecording, error };
+  return { transcript, lines, interimTranscript, audioLevel, isRecording, startRecording, stopRecording, error };
 }

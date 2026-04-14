@@ -14,7 +14,7 @@ npm run preview   # Preview production build
 
 ## Architecture Overview
 
-**Umay** is a React + TypeScript SPA for couples relationship therapy using the Imago Dialogue technique, built on Vite, Tailwind CSS, shadcn/ui, and Supabase.
+**Umay** is a React + TypeScript SPA for couples relationship therapy, supporting two modalities — Imago Dialogue and Open Mediation — built on Vite, Tailwind CSS, shadcn/ui, and Supabase.
 
 ### Routing & Route Guards
 
@@ -44,20 +44,52 @@ Client at `src/integrations/supabase/client.ts`. Auto-generated TypeScript types
 | `couple_invites` | 6-char invite codes for pairing (`pending`/`accepted`/`expired`) |
 | `sessions` | Therapy session records per couple |
 | `session_turns` | Individual speaking turns within a session |
+| `therapy_logs` | Real-time observer log of turns and AI interventions (JSONB `ai_analysis`) |
 
 All tables use Row Level Security. The helper function `is_couple_member()` is used in RLS policies to avoid recursive checks.
 
 ### Therapy Session Architecture
 
-The core feature is a configuration-driven Imago Dialogue state machine.
+The core feature is a configuration-driven state machine. The active protocol is selected on the Home screen and passed into `useSessionState`.
 
-- **Protocol config**: `src/data/imagoProtocol.ts` — defines states, transitions, prompts, evaluation hooks, and per-phase timing
-- **State machine hook**: `src/hooks/useSessionState.ts` — manages current state, active partner, transcripts, timers, and strike count (max 3 strikes for toxicity)
-- **Session UI**: `src/pages/Session.tsx` — split-screen layout using `PartnerZone`, `CenterMediator`, and `GroundingOverlay` components
+**Two protocols:**
 
-**Therapy phases (in order):** `grounding` → `sender` → `mirroring` → `validation` → `empathy` → `role_reversal` → (repeat)
+| Protocol | File | Technique |
+|----------|------|-----------|
+| Imago Core Dialogue | `src/data/imagoProtocol.ts` | Structured turn-taking: Sender → Mirroring → Validation → Empathy → Role Reversal |
+| Open Mediation | `src/data/openMediationProtocol.ts` | Free-form conversation; AI observes silently and interrupts only on tripwire detection |
 
-The protocol config references evaluation engines (`background_analyst`, `llm_as_judge`) and frameworks (`gottman_toxicity`, `eft_needs`) — these are not yet implemented client-side.
+- **State machine hook**: `src/hooks/useSessionState.ts` — manages current state, active partner, transcripts, timers, and strike count (max 3 strikes for toxicity). Accepts a `TherapyConfig` object defined in `src/types/therapyConfig.ts`.
+- **Session UI**: `src/pages/Session.tsx` — renders either split-screen (`PartnerZone` + `CenterMediator`) for Imago or shared-orb (`HearthOrb`) for Open Mediation, plus `GroundingOverlay` and `AIInterventionOverlay`.
+
+**Imago phases (in order):** `grounding` → `sender` → `mirroring` → `validation` → `empathy` → `role_reversal` → (repeat)
+
+**Open Mediation states:** `state_open_floor` (both speaking freely) → `state_ai_intervention` (on tripwire) → back to `state_open_floor`
+
+**Tripwires (Open Mediation):** `the_loop` · `the_missed_drop` · `the_escalation` · `the_stonewall`
+
+### Speech-to-Text Pipeline (`useFalStreaming.ts`)
+
+Dual-layer architecture for real-time + accurate transcription:
+
+1. **Web Speech API** (local, instant) — streams interim results while speaking
+2. **FAL.ai Whisper** (cloud, on stop) — high-accuracy final transcript from the recorded audio blob
+
+On `stopRecording()`, if the recorded audio blob > 500 bytes, it's sent to `fal.ai/whisper`. Falls back to the Web Speech result if FAL fails. Requires `VITE_FAL_KEY`.
+
+### Therapy Logging (`useTherapyLogger.ts`)
+
+Writes to the `therapy_logs` Supabase table for a real-time observer dashboard.
+
+- `logTurn(speaker, transcript, stateKey)` — records a partner speaking turn
+- `logIntervention(tripwireId, text)` — records an AI tripwire intervention with `confidence`, `action_decision: "interrupt"`, and `chain_of_thought`
+
+### AI Intervention UI (`AIInterventionOverlay.tsx`)
+
+Triggered when a tripwire is detected in Open Mediation. Three phases:
+1. **Chime** — plays a 528 Hz → 264 Hz sine wave via Web Audio API for 1.8s
+2. **Speaking** — types out the intervention text character-by-character
+3. **Done** — shows "Continue Conversation" button, calls `onComplete`
 
 ### State Management
 
@@ -68,7 +100,7 @@ The protocol config references evaluation engines (`background_analyst`, `llm_as
 
 ### Styling
 
-Tailwind CSS v3 with a custom Material Design 3-inspired theme. Design tokens defined in `src/index.css`. Typography: Playfair Display (headings) and Outfit (body). Role-based colors distinguish sender (green) vs receiver (blue) zones in the session UI.
+Tailwind CSS v3 with a custom Material Design 3-inspired theme. Design tokens defined in `src/index.css`. Typography: Playfair Display (headings) and Outfit (body). Role-based colors distinguish sender (green) vs receiver (blue) zones in the Imago session UI.
 
 ### Environment Variables
 
@@ -77,4 +109,5 @@ Required in `.env`:
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 VITE_SUPABASE_PROJECT_ID=
+VITE_FAL_KEY=          # FAL.ai API key — required for Whisper transcription
 ```

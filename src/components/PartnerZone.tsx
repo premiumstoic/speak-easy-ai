@@ -15,6 +15,9 @@ interface PartnerZoneProps {
   onStartSpeaking: () => void;
   onStopSpeaking: () => void;
   isLiveRecording?: boolean;
+  liveLines?: string[];
+  liveInterim?: string;
+  audioLevel?: number;
 }
 
 export function PartnerZone({
@@ -32,6 +35,9 @@ export function PartnerZone({
   onStartSpeaking,
   onStopSpeaking,
   isLiveRecording = false,
+  liveLines = [],
+  liveInterim = "",
+  audioLevel = 0,
 }: PartnerZoneProps) {
   const warningThreshold = maxRecordingTime - 10;
   const isWarning = speakingTimer >= warningThreshold || strikeCount >= 2;
@@ -92,15 +98,23 @@ export function PartnerZone({
           </div>
         </div>
 
-        {/* Transcript preview */}
-        {transcript && isActive && (
-          <div className="max-w-xs text-center px-4">
-            <p className="text-sm leading-relaxed text-on-surface-variant font-light line-clamp-2">
-              {transcript}
-              {isSpeaking && (
-                <span className="inline-block w-0.5 h-4 bg-primary ml-1 align-text-bottom" style={{ animation: "pulse-soft 1s infinite" }} />
+        {/* Live transcription ticker */}
+        {isActive && isLiveRecording && (
+          <div className="max-w-xs w-full px-4">
+            <div className="rounded-xl bg-surface-container/70 backdrop-blur-sm px-3 py-2 max-h-20 overflow-y-auto flex flex-col gap-0.5">
+              {liveLines.slice(-3).map((line, i) => (
+                <p key={i} className="text-xs leading-snug text-on-surface-variant/70 font-light">{line}</p>
+              ))}
+              {liveInterim && (
+                <p className="text-xs leading-snug text-on-surface-variant font-light">
+                  {liveInterim}
+                  <span className="inline-block w-0.5 h-3 bg-primary ml-0.5 align-text-bottom" style={{ animation: "pulse-soft 1s infinite" }} />
+                </p>
               )}
-            </p>
+              {!liveLines.length && !liveInterim && (
+                <p className="text-xs text-on-surface-variant/40 italic">Listening…</p>
+              )}
+            </div>
           </div>
         )}
 
@@ -156,19 +170,19 @@ export function PartnerZone({
           </p>
         </button>
 
-        {/* Audio visualization bars */}
-        {isActive && isSpeaking && (
-          <div className="flex justify-center gap-1 opacity-30">
-            {[0, 0.2, 0.4, 0.6, 0.8].map((delay, i) => (
-              <div
-                key={i}
-                className="w-1 bg-primary rounded-full"
-                style={{
-                  animation: `audio-bar 0.8s ease-in-out ${delay}s infinite`,
-                  height: "8px",
-                }}
-              />
-            ))}
+        {/* Mic level visualizer */}
+        {isActive && isLiveRecording && (
+          <div className="flex justify-center items-end gap-1">
+            {[0.5, 0.8, 1.0, 0.8, 0.5].map((scale, i) => {
+              const height = Math.max(3, audioLevel * 32 * scale);
+              return (
+                <div
+                  key={i}
+                  className="w-1 rounded-full bg-primary transition-all duration-75"
+                  style={{ height: `${height}px` }}
+                />
+              );
+            })}
           </div>
         )}
       </div>

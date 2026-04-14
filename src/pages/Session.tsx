@@ -51,6 +51,9 @@ const Session = () => {
   const { logTurn, logIntervention } = useTherapyLogger(sessionId);
   const {
     transcript: sttTranscript,
+    lines: sttLines,
+    interimTranscript: sttInterim,
+    audioLevel: sttAudioLevel,
     isRecording: sttIsRecording,
     startRecording,
     stopRecording,
@@ -184,6 +187,9 @@ const Session = () => {
           onStartSpeaking={handleStartSpeaking}
           onStopSpeaking={handleStopSpeaking}
           transcript={state.transcriptA || state.transcriptB}
+          liveLines={sttLines}
+          liveInterim={sttInterim}
+          audioLevel={sttAudioLevel}
         />
 
         {/* AI Intervention Overlay */}
@@ -254,6 +260,9 @@ const Session = () => {
         onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
         isLiveRecording={sttIsRecording && partnerAActive}
+        liveLines={sttLines}
+        liveInterim={sttInterim}
+        audioLevel={sttAudioLevel}
       />
 
       <CenterMediator
@@ -281,6 +290,9 @@ const Session = () => {
         onStartSpeaking={handleStartSpeaking}
         onStopSpeaking={handleStopSpeaking}
         isLiveRecording={sttIsRecording && partnerBActive}
+        liveLines={sttLines}
+        liveInterim={sttInterim}
+        audioLevel={sttAudioLevel}
       />
 
       <button

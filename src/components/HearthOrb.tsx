@@ -7,6 +7,9 @@ interface HearthOrbProps {
   onStartSpeaking: () => void;
   onStopSpeaking: () => void;
   transcript: string;
+  liveLines?: string[];
+  liveInterim?: string;
+  audioLevel?: number;
 }
 
 export const HearthOrb = ({
@@ -16,6 +19,9 @@ export const HearthOrb = ({
   onStartSpeaking,
   onStopSpeaking,
   transcript,
+  liveLines = [],
+  liveInterim = "",
+  audioLevel = 0,
 }: HearthOrbProps) => {
   const isAmber = orbState === "expanded_speaking_amber";
   const isListening = orbState === "pulsing_listening";
@@ -52,9 +58,14 @@ export const HearthOrb = ({
             : "w-40 h-40 bg-gradient-to-br from-primary to-primary-dim soft-shadow"
         } ${micLocked ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:scale-[1.03] active:scale-95"}`}
       >
-        {/* Inner pulse ring when speaking */}
+        {/* Live audio level ring */}
         {isSpeaking && (
-          <div className="absolute inset-0 rounded-full border-2 border-primary-foreground/30 animate-ping" />
+          <div
+            className="absolute rounded-full border-2 border-primary-foreground/40 transition-all duration-75"
+            style={{
+              inset: `-${Math.round(audioLevel * 20)}px`,
+            }}
+          />
         )}
 
         {micLocked ? (
@@ -73,10 +84,37 @@ export const HearthOrb = ({
           : "Tap orb to speak freely"}
       </p>
 
-      {/* Transcript area */}
-      {transcript && (
-        <div className="mt-6 max-w-md w-full max-h-32 overflow-y-auto rounded-2xl bg-surface-container/60 backdrop-blur-sm p-4">
-          <p className="text-sm font-body text-foreground/80 leading-relaxed">{transcript}</p>
+      {/* Mic level bars */}
+      {isSpeaking && (
+        <div className="mt-3 flex items-end justify-center gap-1">
+          {[0.5, 0.75, 1.0, 0.75, 0.5].map((scale, i) => {
+            const height = Math.max(3, audioLevel * 36 * scale);
+            return (
+              <div
+                key={i}
+                className="w-1.5 rounded-full bg-primary-foreground/60 transition-all duration-75"
+                style={{ height: `${height}px` }}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Live transcription ticker */}
+      {isSpeaking && (
+        <div className="mt-6 max-w-md w-full rounded-2xl bg-surface-container/60 backdrop-blur-sm px-4 py-3 max-h-28 overflow-y-auto flex flex-col gap-1">
+          {liveLines.slice(-4).map((line, i) => (
+            <p key={i} className="text-sm font-body text-foreground/60 leading-snug">{line}</p>
+          ))}
+          {liveInterim && (
+            <p className="text-sm font-body text-foreground/90 leading-snug">
+              {liveInterim}
+              <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 align-text-bottom" style={{ animation: "pulse-soft 1s infinite" }} />
+            </p>
+          )}
+          {!liveLines.length && !liveInterim && (
+            <p className="text-sm font-body text-foreground/30 italic">Listening…</p>
+          )}
         </div>
       )}
     </div>
