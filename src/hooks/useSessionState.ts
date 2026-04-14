@@ -102,22 +102,16 @@ export function useSessionState(config: TherapyConfig) {
         return { ...s, speakingTimer: newTimer };
       });
     }, 1000);
+  }, [getMaxRecordingTime]);
 
-    speakingIntervalRef.current = setInterval(() => {
-      setState((s) => {
-        const word = MOCK_WORDS[wordIndexRef.current % MOCK_WORDS.length];
-        wordIndexRef.current++;
-        // For open_mic_stream, both partners share transcript — write to A
-        const currentType = config.states[s.currentStateKey]?.type;
-        const key = currentType === "open_mic_stream" ? "transcriptA" : (s.activePartner === "A" ? "transcriptA" : "transcriptB");
-        const currentText = s[key] as string;
-        return {
-          ...s,
-          [key]: currentText + (currentText ? " " : "") + word,
-        };
-      });
-    }, 300);
-  }, [getMaxRecordingTime, config]);
+  /** Update transcript from external source (e.g. STT) */
+  const setTranscript = useCallback((text: string) => {
+    setState((s) => {
+      const currentType = config.states[s.currentStateKey]?.type;
+      const key = currentType === "open_mic_stream" ? "transcriptA" : (s.activePartner === "A" ? "transcriptA" : "transcriptB");
+      return { ...s, [key]: text };
+    });
+  }, [config]);
 
   const stopSpeaking = useCallback(() => {
     clearTimers();
