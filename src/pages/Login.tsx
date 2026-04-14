@@ -63,38 +63,20 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required
+            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all" />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required
+            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all" />
+          <button type="submit" disabled={loading}
+            className="w-full py-3.5 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
         <div className="mt-6 text-center space-y-2">
-          <Link to="/forgot-password" className="text-sm text-primary font-body hover:underline block">
-            Forgot password?
-          </Link>
+          <Link to="/forgot-password" className="text-sm text-primary font-body hover:underline block">Forgot password?</Link>
           <p className="text-sm text-muted-foreground font-body">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
+            Don't have an account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
           </p>
         </div>
       </div>

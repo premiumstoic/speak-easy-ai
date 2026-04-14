@@ -17,12 +17,8 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: displayName },
-      },
+      email, password,
+      options: { emailRedirectTo: window.location.origin, data: { full_name: displayName } },
     });
     setLoading(false);
     if (error) {
@@ -34,9 +30,7 @@ const Signup = () => {
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (result.error) {
       toast({ title: "Google signup failed", description: String(result.error), variant: "destructive" });
       setLoading(false);
@@ -52,9 +46,7 @@ const Signup = () => {
           <p className="text-muted-foreground font-body text-sm mb-8">
             We sent a verification link to <strong className="text-foreground">{email}</strong>. Click the link to activate your account.
           </p>
-          <Link to="/login" className="text-sm text-primary font-body hover:underline">
-            Back to login
-          </Link>
+          <Link to="/login" className="text-sm text-primary font-body hover:underline">Back to login</Link>
         </div>
       </div>
     );
@@ -67,14 +59,10 @@ const Signup = () => {
           <UmayLogo className="w-8 h-8 text-primary" />
           <span className="font-headline text-2xl font-semibold italic tracking-tight text-primary">Umay</span>
         </div>
-
         <h1 className="font-headline text-2xl font-bold text-center mb-8">Create your account</h1>
 
-        <button
-          onClick={handleGoogleSignup}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3.5 rounded-full bg-surface-container-high text-on-surface font-body font-medium text-sm hover:bg-surface-container-highest transition-colors mb-6"
-        >
+        <button onClick={handleGoogleSignup} disabled={loading}
+          className="w-full flex items-center justify-center gap-3 py-3.5 rounded-full bg-surface-container-high text-on-surface font-body font-medium text-sm hover:bg-surface-container-highest transition-colors mb-6">
           <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
           Continue with Google
         </button>
@@ -86,43 +74,20 @@ const Signup = () => {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            required
-            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-          />
-          <input
-            type="password"
-            placeholder="Password (min 6 characters)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
+          <input type="text" placeholder="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required
+            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all" />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required
+            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all" />
+          <input type="password" placeholder="Password (min 6 characters)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
+            className="w-full px-5 py-3.5 rounded-2xl bg-surface-container text-on-surface font-body text-sm placeholder:text-on-surface-variant/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all" />
+          <button type="submit" disabled={loading}
+            className="w-full py-3.5 rounded-full bg-gradient-to-br from-primary to-primary-dim text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
             {loading ? "Creating account…" : "Create account"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground font-body">
-          Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline">Sign in</Link>
+          Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
         </p>
       </div>
     </div>
