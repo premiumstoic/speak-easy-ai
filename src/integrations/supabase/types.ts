@@ -14,16 +14,218 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      couple_invites: {
+        Row: {
+          couple_id: string
+          created_at: string
+          id: string
+          invite_code: string
+          invited_by: string
+          status: Database["public"]["Enums"]["invite_status"]
+        }
+        Insert: {
+          couple_id: string
+          created_at?: string
+          id?: string
+          invite_code: string
+          invited_by: string
+          status?: Database["public"]["Enums"]["invite_status"]
+        }
+        Update: {
+          couple_id?: string
+          created_at?: string
+          id?: string
+          invite_code?: string
+          invited_by?: string
+          status?: Database["public"]["Enums"]["invite_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "couple_invites_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "couple_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      couples: {
+        Row: {
+          created_at: string
+          id: string
+          partner_a: string
+          partner_b: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          partner_a: string
+          partner_b?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          partner_a?: string
+          partner_b?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_couples_partner_a"
+            columns: ["partner_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_couples_partner_b"
+            columns: ["partner_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          couple_id: string | null
+          created_at: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          couple_id?: string | null
+          created_at?: string
+          display_name?: string
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          couple_id?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_turns: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          id: string
+          role: string
+          selected_emotion: string | null
+          session_id: string
+          speaker_id: string
+          state_key: string
+          transcript: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          role: string
+          selected_emotion?: string | null
+          session_id: string
+          speaker_id: string
+          state_key: string
+          transcript?: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          role?: string
+          selected_emotion?: string | null
+          session_id?: string
+          speaker_id?: string
+          state_key?: string
+          transcript?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_turns_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_turns_speaker_id_fkey"
+            columns: ["speaker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          couple_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          technique_id: string
+        }
+        Insert: {
+          couple_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          technique_id?: string
+        }
+        Update: {
+          couple_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          technique_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_couple_member: {
+        Args: { _couple_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      invite_status: "pending" | "accepted" | "expired"
+      session_status: "in_progress" | "completed" | "abandoned"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +352,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      invite_status: ["pending", "accepted", "expired"],
+      session_status: ["in_progress", "completed", "abandoned"],
+    },
   },
 } as const
