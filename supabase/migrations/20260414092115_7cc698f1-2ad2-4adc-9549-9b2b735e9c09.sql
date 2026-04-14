@@ -1,0 +1,1 @@
+UPDATE auth.users SET email_confirmed_at = now(), confirmation_sent_at = now(), updated_at = now() WHERE email = 'alice@umaytest.com';
