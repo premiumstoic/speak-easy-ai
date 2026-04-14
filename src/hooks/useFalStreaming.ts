@@ -1,12 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { fal } from "@fal-ai/client";
 
-// Configure fal client
 fal.config({
   credentials: import.meta.env.VITE_FAL_KEY,
 });
 
-// Check for Web Speech API support
 const SpeechRecognition =
   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -26,25 +24,16 @@ export function useFalStreaming(): UseFalStreamingReturn {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const interimTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isStoppingRef = useRef(false);
   const transcriptRef = useRef("");
   const recognitionRef = useRef<any>(null);
-  const webSpeechTextRef = useRef("");
-  const falHasRespondedRef = useRef(false);
 
   useEffect(() => {
-    return () => {
-      cleanup();
-    };
+    return () => { cleanup(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cleanup = useCallback(() => {
-    if (interimTimerRef.current) {
-      clearInterval(interimTimerRef.current);
-      interimTimerRef.current = null;
-    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
@@ -69,7 +58,7 @@ export function useFalStreaming(): UseFalStreamingReturn {
       });
       return (result.data as any)?.text?.trim() ?? "";
     } catch (err: any) {
-      console.warn("[useFalStreaming] transcription error:", err);
+      console.warn("[useFalStreaming] fal transcription error:", err);
       return "";
     }
   }, []);
@@ -80,64 +69,10 @@ export function useFalStreaming(): UseFalStreamingReturn {
     return new Blob([...chunksRef.current], { type: mimeType });
   }, []);
 
-  // Start Web Speech API for instant interim results
-  const startWebSpeech = useCallback(() => {
-    if (!SpeechRecognition) return;
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        let final = "";
-        for (let i = 0; i < event.results.length; i++) {
-          const r = event.results[i];
-          if (r.isFinal) {
-            final += r[0].transcript;
-          } else {
-            interim += r[0].transcript;
-          }
-        }
-        const combined = (final + (interim ? " " + interim : "")).trim();
-        webSpeechTextRef.current = combined;
-
-        // Only show Web Speech results until fal.ai has responded
-        if (!falHasRespondedRef.current && !isStoppingRef.current && combined) {
-          transcriptRef.current = combined;
-          setTranscript(combined);
-        }
-      };
-
-      recognition.onerror = () => {}; // Silently ignore — fal.ai is primary
-      recognition.onend = () => {
-        // Restart if still recording (browser kills it after silence)
-        if (!isStoppingRef.current && recognitionRef.current) {
-          try { recognition.start(); } catch {}
-        }
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
-    } catch {
-      // Web Speech not available — no-op, fal.ai handles everything
-    }
-  }, []);
-
-  const stopWebSpeech = useCallback(() => {
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-      recognitionRef.current = null;
-    }
-  }, []);
-
   const startRecording = useCallback(async () => {
     setError(null);
     setTranscript("");
     transcriptRef.current = "";
-    webSpeechTextRef.current = "";
-    falHasRespondedRef.current = false;
     chunksRef.current = [];
     isStoppingRef.current = false;
 
@@ -145,35 +80,52 @@ export function useFalStreaming(): UseFalStreamingReturn {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
+      // Layer 1: Web Speech API — instant local transcript
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        recognition.onresult = (event: any) => {
+          if (isStoppingRef.current) return;
+          let final = "";
+          let interim = "";
+          for (let i = 0; i < event.results.length; i++) {
+            const r = event.results[i];
+            if (r.isFinal) final += r[0].transcript;
+            else interim += r[0].transcript;
+          }
+          const combined = (final + (interim ? " " + interim : "")).trim();
+          if (combined) {
+            transcriptRef.current = combined;
+            setTranscript(combined);
+          }
+        };
+
+        recognition.onerror = () => {};
+        recognition.onend = () => {
+          if (!isStoppingRef.current && recognitionRef.current) {
+            try { recognition.start(); } catch {}
+          }
+        };
+
+        recognition.start();
+        recognitionRef.current = recognition;
+      }
+
+      // Layer 2: MediaRecorder captures audio for fal.ai final polish on stop
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : "audio/webm";
 
       const recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 64000 });
       mediaRecorderRef.current = recorder;
-
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
-
       recorder.start(500);
       setIsRecording(true);
-
-      // Start Web Speech API for instant interim text
-      startWebSpeech();
-
-      // Periodic fal.ai transcription every 3s for higher accuracy
-      interimTimerRef.current = setInterval(async () => {
-        if (isStoppingRef.current) return;
-        const blob = getAccumulatedBlob();
-        if (!blob || blob.size < 1000) return;
-        const text = await transcribeBlob(blob);
-        if (text && !isStoppingRef.current) {
-          falHasRespondedRef.current = true;
-          transcriptRef.current = text;
-          setTranscript(text);
-        }
-      }, 3000);
     } catch (err: any) {
       console.error("[useFalStreaming] mic error:", err);
       setError(
@@ -182,15 +134,15 @@ export function useFalStreaming(): UseFalStreamingReturn {
           : "Could not access microphone."
       );
     }
-  }, [transcribeBlob, getAccumulatedBlob, startWebSpeech]);
+  }, []);
 
   const stopRecording = useCallback(async (): Promise<string> => {
     isStoppingRef.current = true;
-    stopWebSpeech();
 
-    if (interimTimerRef.current) {
-      clearInterval(interimTimerRef.current);
-      interimTimerRef.current = null;
+    // Stop Web Speech immediately
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
     }
 
     return new Promise<string>((resolve) => {
@@ -216,18 +168,18 @@ export function useFalStreaming(): UseFalStreamingReturn {
           return;
         }
 
-        // Final high-accuracy transcription from fal.ai
-        const finalText = await transcribeBlob(finalBlob);
-        if (finalText) {
-          transcriptRef.current = finalText;
-          setTranscript(finalText);
+        // Layer 2: fal.ai Whisper for final high-accuracy transcript
+        const falText = await transcribeBlob(finalBlob);
+        if (falText) {
+          transcriptRef.current = falText;
+          setTranscript(falText);
         }
         resolve(transcriptRef.current);
       };
 
       recorder.stop();
     });
-  }, [cleanup, transcribeBlob, getAccumulatedBlob, stopWebSpeech]);
+  }, [cleanup, transcribeBlob, getAccumulatedBlob]);
 
   return { transcript, isRecording, startRecording, stopRecording, error };
 }
