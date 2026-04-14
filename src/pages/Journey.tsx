@@ -1,4 +1,5 @@
-import { Map, Heart, Sun, Anchor, Sparkles, ArrowRight, Leaf } from "lucide-react";
+import { Map, Heart, Sun, Anchor, Sparkles, ArrowRight } from "lucide-react";
+import UmayLogo from "@/components/UmayLogo";
 import { BottomNav } from "@/components/BottomNav";
 
 const timelineItems = [
@@ -54,8 +55,8 @@ const Journey = () => {
       {/* Header */}
       <header className="flex justify-between items-center w-full px-8 max-w-screen-xl mx-auto pt-4 bg-transparent">
         <div className="flex items-center gap-2">
-          <Leaf className="w-5 h-5 text-primary" />
-          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Sanctuary</span>
+          <UmayLogo className="w-6 h-6 text-primary" />
+          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
         </div>
         <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-muted-foreground font-body font-semibold text-sm">
           S
@@ -117,7 +118,7 @@ const Journey = () => {
                 <h3 className="font-headline text-secondary font-semibold tracking-tight">Reflection Insight</h3>
               </div>
               <p className="text-on-surface-variant italic text-lg leading-relaxed font-headline">
-                "Your sessions show a 30% increase in 'Active Listening' tags over the last month. You are building a sanctuary of mutual understanding."
+                "Your sessions show a 30% increase in 'Active Listening' tags over the last month. You are nurturing a deeper connection."
               </p>
             </div>
           </div>
@@ -125,7 +126,7 @@ const Journey = () => {
 
         {/* End prompt */}
         <div className="mt-12 text-center py-12 border-t border-line/30">
-          <Leaf className="w-8 h-8 text-tertiary mx-auto mb-4" />
+          <UmayLogo className="w-8 h-8 text-tertiary mx-auto mb-4" />
           <h3 className="font-headline text-xl font-semibold">Continue the growth</h3>
           <p className="text-on-surface-variant mt-2 mb-8 font-body">Your next milestone is scheduled for Friday.</p>
           <button className="bg-primary text-primary-foreground rounded-full px-8 py-4 font-semibold soft-shadow-lg hover:opacity-90 transition-all duration-200 flex items-center gap-2 mx-auto font-body">

@@ -145,7 +145,7 @@ export default {
         "float-in": "float-in 0.4s ease-out",
       },
       transitionTimingFunction: {
-        sanctuary: "ease-out",
+        umay: "ease-out",
       },
     },
   },

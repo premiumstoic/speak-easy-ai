@@ -3,7 +3,8 @@ import { GroundingOverlay } from "@/components/GroundingOverlay";
 import { PartnerZone } from "@/components/PartnerZone";
 import { CenterMediator } from "@/components/CenterMediator";
 import { toast } from "sonner";
-import { Bug, X, Leaf } from "lucide-react";
+import { Bug, X } from "lucide-react";
+import UmayLogo from "@/components/UmayLogo";
 import { useNavigate } from "react-router-dom";
 
 const Session = () => {
@@ -54,8 +55,8 @@ const Session = () => {
       {/* Session Header */}
       <header className="fixed top-0 left-0 right-0 z-[60] pt-4 px-6 flex justify-between items-center pointer-events-none">
         <div className="flex items-center gap-2 pointer-events-auto">
-          <Leaf className="w-5 h-5 text-primary" />
-          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Sanctuary</span>
+          <UmayLogo className="w-6 h-6 text-primary" />
+          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
         </div>
         <button
           onClick={() => navigate("/")}

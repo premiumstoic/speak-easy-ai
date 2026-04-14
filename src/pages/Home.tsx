@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { Mic, Leaf } from "lucide-react";
+import { Mic } from "lucide-react";
 import { InsightCard } from "@/components/InsightCard";
+import UmayLogo from "@/components/UmayLogo";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -10,8 +11,8 @@ const Home = () => {
       {/* Header */}
       <header className="pt-4 pb-2 px-6 flex justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
-          <Leaf className="w-5 h-5 text-primary" />
-          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Sanctuary</span>
+          <UmayLogo className="w-6 h-6 text-primary" />
+          <span className="font-headline text-lg font-semibold italic tracking-tight text-primary">Umay</span>
         </div>
         <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-muted-foreground font-body font-semibold text-sm">
           S
