@@ -15,6 +15,9 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        headline: ["Manrope", "system-ui", "sans-serif"],
+        body: ["Inter", "system-ui", "sans-serif"],
+        label: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -25,10 +28,17 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          dim: "hsl(var(--primary-dim))",
+          container: "hsl(var(--primary-container))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          container: "hsl(var(--secondary-container))",
+        },
+        tertiary: {
+          DEFAULT: "hsl(var(--tertiary))",
+          container: "hsl(var(--tertiary-container))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -49,6 +59,25 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          "container-low": "hsl(var(--surface-container-low))",
+          container: "hsl(var(--surface-container))",
+          "container-high": "hsl(var(--surface-container-high))",
+          "container-highest": "hsl(var(--surface-container-highest))",
+          "container-lowest": "hsl(var(--surface-container-lowest))",
+        },
+        "on-surface": {
+          DEFAULT: "hsl(var(--on-surface))",
+          variant: "hsl(var(--on-surface-variant))",
+        },
+        "on-primary-container": "hsl(var(--on-primary-container))",
+        "on-secondary-container": "hsl(var(--on-secondary-container))",
+        "on-tertiary-container": "hsl(var(--on-tertiary-container))",
+        outline: {
+          DEFAULT: "hsl(var(--outline))",
+          variant: "hsl(var(--outline-variant))",
         },
         sender: {
           DEFAULT: "hsl(var(--sender))",
@@ -79,9 +108,10 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "2rem",
+        md: "1rem",
+        sm: "0.5rem",
+        xl: "3rem",
       },
       keyframes: {
         "accordion-down": {
@@ -100,12 +130,20 @@ export default {
           "0%": { transform: "scale(0.95)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
+        "float-in": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.4s ease-out",
-        "scale-in": "scale-in 0.3s ease-out",
+        "fade-in": "fade-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "scale-in": "scale-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "float-in": "float-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)",
+      },
+      transitionTimingFunction: {
+        sanctuary: "cubic-bezier(0.2, 0.8, 0.2, 1)",
       },
     },
   },
