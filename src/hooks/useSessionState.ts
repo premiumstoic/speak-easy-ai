@@ -16,14 +16,6 @@ export interface SessionData {
   activeTripwire: string | null;
 }
 
-const MOCK_WORDS = [
-  "I", "feel", "like", "when", "we", "talk", "about", "this",
-  "it", "makes", "me", "feel", "really", "frustrated", "because",
-  "I", "just", "want", "us", "to", "understand", "each", "other",
-  "better", "and", "find", "a", "way", "to", "connect", "more",
-  "deeply", "with", "one", "another", "through", "honest",
-  "communication", "and", "mutual", "respect",
-];
 
 export function useSessionState(config: TherapyConfig) {
   const initialState = config.states[config.initial_state];
@@ -232,5 +224,6 @@ export function useSessionState(config: TherapyConfig) {
     selectEmotion,
     triggerIntervention,
     completeIntervention,
+    setTranscript,
   };
 }
