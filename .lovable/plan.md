@@ -1,109 +1,71 @@
 
 
-# Backend Data Architecture: Users, Couples & Sessions
+# Plan: Add "Guided Enactment" Therapy Method
 
-## Data Model
+## Overview
+
+This is a significant feature. The new technique ("Open Mediation") has fundamentally different mechanics from the existing Imago Dialogue — open mic streaming for both partners simultaneously, AI-driven tripwire detection, system interruptions with audio/TTS, and an "orb" UI instead of split-screen partner zones. This requires extending types, creating new UI components, adding technique selection, and wiring up AI evaluation.
+
+## What Changes
+
+### 1. Extend the Type System (`src/types/therapyConfig.ts`)
+- Add new `type` values: `"open_mic_stream"`, `"system_interruption"`
+- Add new `layout` values: `"shared_hearth_orb"`, `"ai_focus"`
+- Add `"BOTH"` and `"SYSTEM"` to `active_role`
+- Add optional fields: `tripwires`, `confidence_threshold`, `context_window_size`, `action_sequence`, `intervention_templates`, `orb_state` to the relevant interfaces
+
+### 2. Create the Protocol Config (`src/data/openMediationProtocol.ts`)
+- Store the full JSON you provided as a typed `TherapyConfig` object, analogous to `imagoProtocol.ts`
+
+### 3. Add Technique Selection to the Home Page
+- Before navigating to `/session`, show a picker (modal or inline) letting the user choose between "Imago Dialogue" and "Guided Enactment"
+- Pass the selected technique ID via route state or URL param (`/session?technique=open_mediation_enactment`)
+
+### 4. Update Session Page (`src/pages/Session.tsx`)
+- Read the technique param and load the correct protocol config
+- Conditionally render **either** the existing split-screen layout (PartnerZone + CenterMediator) **or** a new `HearthOrb` layout based on the current state's `layout` field
+
+### 5. Create New UI Components
+- **`HearthOrb`** — the central animated orb (pulsing/listening, expanded/speaking/amber states). Both partners share one view with a shared mic
+- **`AIInterventionOverlay`** — fullscreen overlay when AI interrupts: plays a chime sound, shows the intervention text (generated from templates), locks mic
+
+### 6. Extend the State Machine (`src/hooks/useSessionState.ts`)
+- Handle `open_mic_stream` type: both partners can speak, no turn-taking
+- Handle `system_interruption` type: lock mic, play action sequence, then transition back
+- Add tripwire trigger logic (for now, the debug button can simulate a tripwire detection; real AI streaming evaluation is a future backend feature)
+
+### 7. Future / Stubbed Work
+- **Streaming LLM evaluation**: The `llm_as_judge_streaming` agent and acoustic markers require a real-time backend pipeline — this will be stubbed with a debug trigger button (similar to the existing toxicity strike button)
+- **TTS playback**: The `generate_tts` action would need an edge function (ElevenLabs or similar) — stubbed for now with text display
+- **Audio chime**: Can embed a short chime sound file or use Web Audio API for the singing bowl effect
+
+## Technical Details
 
 ```text
-profiles (1 per user)
-    │
-    ├── couple_id FK ──► couples (1 per pair)
-    │                        │
-    │                        ├──► sessions (1 per therapy run)
-    │                        │        │
-    │                        │        └──► session_turns (1 per speaking turn)
-    │                        │
-    │                        └──► couple_invites (pending invitations)
-    │
-    └── user_id FK ──► auth.users
+src/
+├── types/therapyConfig.ts        ← extend interfaces
+├── data/
+│   ├── imagoProtocol.ts           ← existing (unchanged)
+│   └── openMediationProtocol.ts   ← new protocol config
+├── hooks/useSessionState.ts       ← extend for new state types
+├── pages/
+│   ├── Home.tsx                   ← add technique picker
+│   └── Session.tsx                ← conditional layout rendering
+├── components/
+│   ├── HearthOrb.tsx              ← new: shared orb UI
+│   ├── AIInterventionOverlay.tsx  ← new: intervention screen
+│   ├── PartnerZone.tsx            ← existing (unchanged)
+│   └── CenterMediator.tsx         ← existing (unchanged)
 ```
 
-## Tables
+## Scope for This Implementation
 
-### 1. `profiles`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | = auth.users.id |
-| couple_id | uuid FK nullable | null until paired |
-| display_name | text | |
-| avatar_url | text nullable | |
-| created_at | timestamptz | |
-
-### 2. `couples`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| partner_a | uuid FK profiles | first user |
-| partner_b | uuid FK profiles | second user (set on invite accept) |
-| created_at | timestamptz | |
-
-### 3. `couple_invites`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| couple_id | uuid FK | |
-| invited_by | uuid FK profiles | |
-| invite_code | text unique | 6-char code |
-| status | enum: pending/accepted/expired | |
-| created_at | timestamptz | |
-
-### 4. `sessions`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| couple_id | uuid FK | |
-| technique_id | text | e.g. "imago_core_dialogue" |
-| started_at | timestamptz | |
-| ended_at | timestamptz nullable | |
-| status | enum: in_progress/completed/abandoned | |
-
-### 5. `session_turns`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| session_id | uuid FK | |
-| state_key | text | e.g. "sender", "mirroring" |
-| speaker_id | uuid FK profiles | who spoke |
-| role | text | SENDER / RECEIVER |
-| transcript | text | |
-| selected_emotion | text nullable | |
-| duration_seconds | int | |
-| created_at | timestamptz | |
-
-## Invite Flow
-
-1. User A signs up → profile created (couple_id = null)
-2. User A taps "Invite Partner" → creates a `couple` + `couple_invite` with a 6-char code
-3. User A shares the code (copy/paste, message)
-4. User B signs up → enters invite code → invite accepted → both profiles get `couple_id` set
-
-## RLS Strategy
-
-- **profiles**: Users can read/update their own row. Can read their partner's row (same couple_id).
-- **couples**: Readable/updatable only by members (partner_a or partner_b = auth.uid()).
-- **couple_invites**: Created by invite sender. Readable by sender or anyone with the code (for accepting).
-- **sessions / session_turns**: Readable only by couple members. Insert only by couple members.
-
-## Authentication
-
-- Email + password signup with email verification (no auto-confirm)
-- Google OAuth
-- Profile auto-created on signup via database trigger
-- Auth pages: Login, Signup, Forgot Password, Reset Password
-
-## Implementation Steps
-
-1. **Database migration** — Create all 5 tables, enums, RLS policies, and the profile auto-creation trigger
-2. **Auth pages** — Login, Signup, Forgot Password, Reset Password with route guards
-3. **Onboarding flow** — After signup, prompt for display name → show invite code screen (create couple) or enter code screen (join couple)
-4. **Update Home page** — Show partner name, couple status; gate "Start Session" behind having a couple
-5. **Session persistence** — On session start, insert into `sessions`; on each turn completion, insert into `session_turns`; on session end, update `sessions.ended_at`
-6. **Journey page** — Query `sessions` + `session_turns` from the database instead of mock data
-
-## What This Enables
-- Each user has their own login
-- Partners link via invite code (no email sharing required)
-- All session data is stored per-couple
-- Journey page shows real history
-- Future: backend can select therapy technique per couple based on their history
+- Full type system extension
+- Protocol config file
+- Technique selection UI on Home page
+- HearthOrb shared-mic layout with animated orb states
+- AI Intervention overlay with template-based text
+- Debug button to simulate tripwire detection
+- Chime sound effect (Web Audio API tone)
+- TTS and real streaming AI evaluation **stubbed** (marked as future backend work)
 
