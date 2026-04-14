@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import UmayLogo from "@/components/UmayLogo";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +12,17 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+
+  // Redirect once AuthContext confirms the user is authenticated.
+  // This is the correct pattern: let onAuthStateChange update the context
+  // first, then navigate — avoids ProtectedRoute seeing user=null on the
+  // first render after signInWithPassword resolves.
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,9 +31,8 @@ const Login = () => {
     setLoading(false);
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
-    } else {
-      navigate("/");
     }
+    // Navigation is handled by the useEffect above once AuthContext updates.
   };
 
   const handleGoogleLogin = async () => {
@@ -33,8 +44,8 @@ const Login = () => {
       toast({ title: "Google login failed", description: String(result.error), variant: "destructive" });
       setLoading(false);
     }
-    if (result.redirected) return;
-    navigate("/");
+    // For OAuth redirect flows, the page navigates away automatically.
+    // For popup flows, the useEffect above handles navigation.
   };
 
   return (

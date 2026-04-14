@@ -49,6 +49,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    // onAuthStateChange fires INITIAL_SESSION synchronously on subscription,
+    // so we don't need a separate getSession() call — that would cause a
+    // redundant double profile-fetch race on every page load.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
@@ -61,15 +64,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
