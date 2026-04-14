@@ -14,6 +14,8 @@ export interface SessionData {
   strikeFlash: null | 1 | 2 | 3;
   selectedEmotion: string | null;
   activeTripwire: string | null;
+  completedTurns: number;
+  isSessionComplete: boolean;
 }
 
 
@@ -34,6 +36,8 @@ export function useSessionState(config: TherapyConfig) {
     strikeFlash: null,
     selectedEmotion: null,
     activeTripwire: null,
+    completedTurns: 0,
+    isSessionComplete: false,
   });
 
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -109,6 +113,8 @@ export function useSessionState(config: TherapyConfig) {
 
   const advanceState = useCallback(() => {
     setState((s) => {
+      if (s.isSessionComplete) return s;
+
       const currentTherapyState = config.states[s.currentStateKey];
       if (!currentTherapyState) return s;
 
@@ -121,8 +127,27 @@ export function useSessionState(config: TherapyConfig) {
       if (!nextTherapyState) return s;
 
       if (currentTherapyState.type === "role_reversal") {
+        const nextCompletedTurns = s.completedTurns + 1;
+        const hasTurnLimit = typeof config.max_turns === "number" && config.max_turns > 0;
+        const reachedTurnLimit = hasTurnLimit && nextCompletedTurns >= config.max_turns;
+
+        if (reachedTurnLimit) {
+          return {
+            ...s,
+            completedTurns: nextCompletedTurns,
+            isSessionComplete: true,
+            micLock: true,
+            strikeCount: 0,
+            strikeFlash: null,
+            selectedEmotion: null,
+            isSpeaking: false,
+            speakingTimer: 0,
+          };
+        }
+
         return {
           ...s,
+          completedTurns: nextCompletedTurns,
           currentStateKey: nextKey,
           activePartner: s.activePartner === "A" ? "B" as const : "A" as const,
           micLock: false,
@@ -148,27 +173,33 @@ export function useSessionState(config: TherapyConfig) {
   /** Trigger an AI intervention (for Open Mediation) */
   const triggerIntervention = useCallback((tripwireId: string) => {
     clearTimers();
-    setState((s) => ({
-      ...s,
-      currentStateKey: "state_ai_intervention",
-      micLock: true,
-      isSpeaking: false,
-      activeTripwire: tripwireId,
-    }));
+    setState((s) => {
+      if (s.isSessionComplete) return s;
+      return {
+        ...s,
+        currentStateKey: "state_ai_intervention",
+        micLock: true,
+        isSpeaking: false,
+        activeTripwire: tripwireId,
+      };
+    });
   }, [clearTimers]);
 
   /** Complete the AI intervention and return to open floor */
   const completeIntervention = useCallback(() => {
     const interventionState = config.states["state_ai_intervention"];
     const nextKey = interventionState?.transitions?.on_intervention_complete ?? "state_open_floor";
-    setState((s) => ({
-      ...s,
-      currentStateKey: nextKey,
-      micLock: false,
-      activeTripwire: null,
-      transcriptA: "",
-      transcriptB: "",
-    }));
+    setState((s) => {
+      if (s.isSessionComplete) return s;
+      return {
+        ...s,
+        currentStateKey: nextKey,
+        micLock: false,
+        activeTripwire: null,
+        transcriptA: "",
+        transcriptB: "",
+      };
+    });
   }, [config]);
 
   const triggerStrike = useCallback(() => {

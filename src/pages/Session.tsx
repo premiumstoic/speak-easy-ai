@@ -13,7 +13,7 @@ import { openMediationProtocol } from "@/data/openMediationProtocol";
 import { toast } from "sonner";
 import { Bug, X, AlertTriangle } from "lucide-react";
 import UmayLogo from "@/components/UmayLogo";
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo, useEffect, useRef } from "react";
 
 const PROTOCOLS: Record<string, typeof imagoProtocol> = {
   imago_core_dialogue: imagoProtocol,
@@ -47,6 +47,8 @@ const Session = () => {
     completeIntervention,
     setTranscript,
   } = useSessionState(protocol);
+  const { isSessionComplete, completedTurns } = state;
+  const hasHandledCompletionRef = useRef(false);
 
   const { logTurn, logIntervention } = useTherapyLogger(sessionId);
   const {
@@ -55,6 +57,7 @@ const Session = () => {
     interimTranscript: sttInterim,
     audioLevel: sttAudioLevel,
     isRecording: sttIsRecording,
+    isTranscribing: sttIsTranscribing,
     startRecording,
     stopRecording,
     error: sttError,
@@ -73,6 +76,16 @@ const Session = () => {
       toast.error("Microphone Error", { description: sttError });
     }
   }, [sttError]);
+
+  // End limited-turn protocols (e.g., Imago) once the configured turn count is reached.
+  useEffect(() => {
+    if (!isSessionComplete || hasHandledCompletionRef.current) return;
+    hasHandledCompletionRef.current = true;
+    toast.success("Session complete", {
+      description: `Completed ${completedTurns} turns.`,
+    });
+    navigate("/", { replace: true });
+  }, [isSessionComplete, completedTurns, navigate]);
 
   const currentTherapyState = getCurrentState();
   const activeRole = currentTherapyState?.active_role;
@@ -190,6 +203,7 @@ const Session = () => {
           liveLines={sttLines}
           liveInterim={sttInterim}
           audioLevel={sttAudioLevel}
+          isTranscribing={sttIsTranscribing}
         />
 
         {/* AI Intervention Overlay */}
@@ -263,6 +277,7 @@ const Session = () => {
         liveLines={sttLines}
         liveInterim={sttInterim}
         audioLevel={sttAudioLevel}
+        isTranscribing={sttIsTranscribing && partnerAActive}
       />
 
       <CenterMediator
@@ -293,6 +308,7 @@ const Session = () => {
         liveLines={sttLines}
         liveInterim={sttInterim}
         audioLevel={sttAudioLevel}
+        isTranscribing={sttIsTranscribing && partnerBActive}
       />
 
       <button
