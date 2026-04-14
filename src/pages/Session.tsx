@@ -53,6 +53,22 @@ const Session = () => {
   const maxTime = getMaxRecordingTime();
   const layout = currentTherapyState?.layout;
 
+  // Wrap stopSpeaking to log the turn
+  const handleStopSpeaking = useCallback(() => {
+    const transcript = state.activePartner === "A" ? state.transcriptA : state.transcriptB;
+    const speaker = state.activePartner === "A" ? "Partner A" : "Partner B";
+    logTurn(speaker, transcript, state.currentStateKey);
+    stopSpeaking();
+  }, [stopSpeaking, logTurn, state.activePartner, state.transcriptA, state.transcriptB, state.currentStateKey]);
+
+  // Wrap triggerIntervention to log it
+  const handleTriggerIntervention = useCallback((tripwireId: string) => {
+    const interventionState = protocol.states["state_ai_intervention"];
+    const text = interventionState?.intervention_templates?.[tripwireId] ?? "Let us pause.";
+    logIntervention(tripwireId, text);
+    triggerIntervention(tripwireId);
+  }, [triggerIntervention, logIntervention, protocol]);
+
   const handleStrike = () => {
     if (state.strikeCount >= 2) {
       toast.error("Hard Cut: AI Intervention", {
