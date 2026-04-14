@@ -1,15 +1,55 @@
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Heart, Clock, Shield, LogOut, Sparkles, User, Settings, ChevronRight } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [reminders, setReminders] = useState(true);
   const [privacy, setPrivacy] = useState(true);
+  const [partnerName, setPartnerName] = useState<string | null>(null);
+  const [sessionCount, setSessionCount] = useState(0);
+
+  useEffect(() => {
+    if (!profile?.couple_id || !user) return;
+
+    // Fetch partner name
+    const fetchPartner = async () => {
+      const { data: couple } = await supabase
+        .from("couples")
+        .select("partner_a, partner_b")
+        .eq("id", profile.couple_id!)
+        .maybeSingle();
+
+      if (couple) {
+        const partnerId = couple.partner_a === user.id ? couple.partner_b : couple.partner_a;
+        if (partnerId) {
+          const { data: partnerProfile } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", partnerId)
+            .maybeSingle();
+          setPartnerName(partnerProfile?.display_name || null);
+        }
+      }
+    };
+
+    // Fetch session count
+    const fetchSessions = async () => {
+      const { count } = await supabase
+        .from("sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("couple_id", profile.couple_id!);
+      setSessionCount(count || 0);
+    };
+
+    fetchPartner();
+    fetchSessions();
+  }, [profile?.couple_id, user]);
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -29,10 +69,12 @@ const Profile = () => {
               <User className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h2 className="font-headline text-xl font-semibold">Sarah</h2>
+              <h2 className="font-headline text-xl font-semibold">{profile?.display_name || "You"}</h2>
               <div className="flex items-center gap-1.5 mt-1">
                 <Heart className="w-3.5 h-3.5 text-secondary fill-secondary" />
-                <span className="text-on-surface-variant text-sm font-medium font-body">Linked with Tom</span>
+                <span className="text-on-surface-variant text-sm font-medium font-body">
+                  {partnerName ? `Linked with ${partnerName}` : "Waiting for partner"}
+                </span>
               </div>
             </div>
           </div>
@@ -40,7 +82,7 @@ const Profile = () => {
           {/* Stats Row */}
           <div className="flex gap-3">
             <div className="flex-1 bg-surface-container-low rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-primary font-headline">4</p>
+              <p className="text-2xl font-bold text-primary font-headline">{sessionCount}</p>
               <p className="text-on-surface-variant text-xs mt-0.5 font-body">Sessions</p>
             </div>
             <div className="flex-1 bg-surface-container-low rounded-lg p-4 text-center">
@@ -65,7 +107,9 @@ const Profile = () => {
             <div>
               <h3 className="font-semibold text-sm text-on-surface mb-1 font-body">Reflection Insight</h3>
               <p className="text-on-surface-variant text-sm leading-relaxed font-body">
-                You and Tom have maintained a 2-week streak. Your evening reflections are building a stronger emotional safety net.
+                {partnerName
+                  ? `You and ${partnerName} are building a shared space for deeper connection. Start a session to grow together.`
+                  : "Start your first session to unlock personalized insights about your relationship patterns."}
               </p>
             </div>
           </div>
