@@ -36,14 +36,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const fetchProfile = async (userId: string) => {
+    setProfileLoading(true);
     const { data } = await supabase
       .from("profiles")
       .select("id, display_name, couple_id, avatar_url")
       .eq("id", userId)
       .single();
     setProfile(data as Profile | null);
+    setProfileLoading(false);
   };
 
   const refreshProfile = async () => {
@@ -51,9 +54,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION synchronously on subscription,
-    // so we don't need a separate getSession() call — that would cause a
-    // redundant double profile-fetch race on every page load.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, profileLoading, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );
